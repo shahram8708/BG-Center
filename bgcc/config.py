@@ -15,6 +15,36 @@ def _as_bool(value, default=False):
     return str(value).strip().lower() in ("1", "true", "yes", "on")
 
 
+def _normalize_vapid_public_key(pub_key, priv_key=None):
+    if pub_key:
+        pub_str = str(pub_key).strip()
+        if len(pub_str) == 130 and all(c in "0123456789abcdefABCDEF" for c in pub_str):
+            try:
+                import base64
+                return base64.urlsafe_b64encode(bytes.fromhex(pub_str)).rstrip(b"=").decode("ascii")
+            except Exception:
+                pass
+        try:
+            import base64
+            padded = pub_str + "=" * ((4 - len(pub_str) % 4) % 4)
+            raw = base64.urlsafe_b64decode(padded.replace("+", "-").replace("/", "_"))
+            if len(raw) == 65:
+                return base64.urlsafe_b64encode(raw).rstrip(b"=").decode("ascii")
+        except Exception:
+            pass
+    if priv_key:
+        try:
+            import base64
+            from pywebpush import Vapid
+            v = Vapid.from_string(priv_key)
+            from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+            raw_pub = v.public_key.public_bytes(Encoding.X962, PublicFormat.UncompressedPoint)
+            return base64.urlsafe_b64encode(raw_pub).rstrip(b"=").decode("ascii")
+        except Exception:
+            pass
+    return pub_key or ""
+
+
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-insecure-secret-change-me")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -48,8 +78,10 @@ class Config:
     DASHBOARD_CACHE_KEY = "dashboard_aggregates"
 
     # ---- Web push (VAPID) ----
-    VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "")
     VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "")
+    VAPID_PUBLIC_KEY = _normalize_vapid_public_key(
+        os.environ.get("VAPID_PUBLIC_KEY", ""), VAPID_PRIVATE_KEY
+    )
     VAPID_CLAIMS_EMAIL = os.environ.get("VAPID_CLAIMS_EMAIL", "admin@bg.center")
 
     SMTP_HOST = os.environ.get("SMTP_HOST", "")

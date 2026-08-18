@@ -1,57 +1,49 @@
 /* BG Command Centre service worker.
  *
- * Offline strategy is differentiated by page category:
- *   - Fully static pages (About / AI Disclaimer / Privacy / Terms): cache-first.
- *   - Read-only informational pages the user has visited (Dashboard, BG Status
- *     Hub, Bank Tracker, BG Detail & Timeline, Notifications, Audit Log):
- *     network-first with cache fallback. The app shows an honest "cached data"
- *     banner when serving from cache while offline.
- *   - Workflow-changing pages/actions: never cached for offline submission.
- *     The app disables those submits offline.
- * Static assets use stale-while-revalidate.
+ * Production-ready offline-first caching and Web Push notification handler.
+ * - Static assets & fallback shell: Cache-first with background revalidation.
+ * - Dynamic HTML / GET pages: Network-first with cache fallback, so online
+ *   refreshes always display fresh data while retaining immediate offline availability.
+ * - Offline navigation fallback: Renders the dedicated /offline page when neither
+ *   network nor cache is available.
+ * - Safe versioned cache invalidation and immediate claim without breaking active sessions.
+ * - Full Web Push notification and background click management.
  */
-const VERSION = "bgcc-v9";
+
+const VERSION = "bgcc-v10";
 const STATIC_CACHE = `${VERSION}-static`;
 const PAGE_CACHE = `${VERSION}-pages`;
 
 const PRECACHE_STATIC = [
+  "/offline",
   "/static/manifest.json",
   "/static/css/app.css",
   "/static/js/app.js",
+  "/static/icons/icon.svg",
   "/static/icons/icon-192.png",
   "/static/icons/icon-512.png",
-  "/static/icons/icon.svg"
+  "/static/vendor/css/bootstrap.min.css",
+  "/static/vendor/css/bootstrap-icons.min.css",
+  "/static/vendor/js/bootstrap.bundle.min.js",
+  "/static/vendor/css/fonts/bootstrap-icons.woff2",
+  "/static/vendor/css/fonts/bootstrap-icons.woff"
 ];
-
-// Fully static, never-changing pages - cache aggressively (cache-first).
-const STATIC_PAGES = [
-  "/about",
-  "/legal/disclaimer",
-  "/legal/privacy",
-  "/legal/terms"
-];
-
-// Read-only informational pages - network-first, cache fallback.
-const READ_ONLY_PAGE_PREFIXES = [
-  "/dashboard",
-  "/bg-status",
-  "/bg-bank-tracker",
-  "/bg/",
-  "/notifications",
-  "/admin/audit-log"
-];
-
-function isStaticPage(path) {
-  return STATIC_PAGES.some((p) => path === p || path === p + "/");
-}
-
-function isReadOnlyPage(path) {
-  return READ_ONLY_PAGE_PREFIXES.some((p) => path === p || path.startsWith(p));
-}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE_STATIC))
+    caches.open(STATIC_CACHE).then(async (cache) => {
+      const precachePromises = PRECACHE_STATIC.map(async (url) => {
+        try {
+          const response = await fetch(url, { cache: "reload" });
+          if (response && response.ok) {
+            await cache.put(url, response);
+          }
+        } catch (err) {
+          // Gracefully continue if an optional font or asset is unreachable
+        }
+      });
+      await Promise.all(precachePromises);
+    })
   );
   self.skipWaiting();
 });
@@ -59,140 +51,145 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => key.indexOf(VERSION) !== 0).map((key) => caches.delete(key)))
+      Promise.all(
+        keys
+          .filter((key) => key !== STATIC_CACHE && key !== PAGE_CACHE)
+          .map((key) => caches.delete(key))
+      )
     )
   );
   self.clients.claim();
 });
 
-async function cacheFirst(request) {
-  const cache = await caches.open(STATIC_CACHE);
-  const cached = await cache.match(request);
-  if (cached) return cached;
-  try {
-    const response = await fetch(request);
-    if (response && response.ok) {
-      const responseForCache = response.clone();
-      cache.put(request, responseForCache);
-    }
-    return response;
-  } catch (e) {
-    return new Response("", { status: 504, statusText: "Offline" });
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
   }
+});
+
+async function cacheFirstStatic(request) {
+  const cache = await caches.open(STATIC_CACHE);
+  const cachedResponse = await cache.match(request);
+
+  const fetchPromise = fetch(request)
+    .then((networkResponse) => {
+      if (networkResponse && networkResponse.ok) {
+        cache.put(request, networkResponse.clone());
+      }
+      return networkResponse;
+    })
+    .catch(() => cachedResponse);
+
+  return cachedResponse || fetchPromise;
 }
 
-async function networkFirstWithPageCache(request) {
+async function networkFirst(request) {
   const cache = await caches.open(PAGE_CACHE);
   try {
-    const response = await fetch(request);
-    if (response && response.ok) {
-      const responseForCache = response.clone();
-      cache.put(request, responseForCache);
+    const networkResponse = await fetch(request);
+    if (networkResponse && networkResponse.ok) {
+      cache.put(request, networkResponse.clone());
     }
-    return response;
-  } catch (e) {
-    const cached = await cache.match(request);
-    if (cached) return cached;
-    return new Response("", { status: 504, statusText: "Offline" });
-  }
-}
-
-async function networkOnlyWithOfflineFallback(request) {
-  try {
-    const response = await fetch(request);
-    if (response && response.ok) return response;
-    // For failed navigations with nothing cached, fall back to /offline.
-    if (request.mode === "navigate") {
-      const offline = await caches.match("/offline");
-      if (offline) return offline;
+    return networkResponse;
+  } catch (err) {
+    const cachedResponse = await cache.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
     }
-    return response;
-  } catch (e) {
-    if (request.mode === "navigate") {
-      const offline = await caches.match("/offline");
-      if (offline) return offline;
-    }
-    return new Response("", { status: 504, statusText: "Offline" });
-  }
-}
-
-async function staleWhileRevalidate(request) {
-  const cache = await caches.open(STATIC_CACHE);
-  const cached = await cache.match(request);
-
-  const fetchPromise = (async () => {
-    try {
-      const response = await fetch(request);
-      if (response && response.ok) {
-        const responseForCache = response.clone();
-        cache.put(request, responseForCache);
+    if (request.mode === "navigate" || (request.headers.get("accept") && request.headers.get("accept").includes("text/html"))) {
+      const offlineFallback = await caches.match("/offline");
+      if (offlineFallback) {
+        return offlineFallback;
       }
-      return response;
-    } catch (e) {
-      return cached || new Response("", { status: 504, statusText: "Offline" });
     }
-  })();
-
-  return cached || fetchPromise;
+    return new Response("You are currently offline and this resource is not cached.", {
+      status: 503,
+      statusText: "Offline",
+      headers: { "Content-Type": "text/plain" }
+    });
+  }
 }
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
+
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+
   const path = url.pathname;
 
-  // Static assets: stale-while-revalidate.
-  if (path.startsWith("/static/")) {
-    event.respondWith(staleWhileRevalidate(request));
+  // Don't intercept server-sent assistant events or logout
+  if (path.startsWith("/assistant/events") || path.startsWith("/auth/sign-out")) {
     return;
   }
 
-  // Fully static pages: cache-first.
-  if (isStaticPage(path)) {
-    event.respondWith(cacheFirst(request));
+  // Precached & static assets (CSS, JS, images, fonts, manifest)
+  if (
+    path.startsWith("/static/") ||
+    path === "/manifest.json" ||
+    path === "/sw.js"
+  ) {
+    event.respondWith(cacheFirstStatic(request));
     return;
   }
 
-  // Read-only informational pages: network-first, cache fallback.
-  if (isReadOnlyPage(path) && request.mode === "navigate") {
-    event.respondWith(networkFirstWithPageCache(request));
-    return;
-  }
-
-  // Everything else (including workflow pages): network-only with offline
-  // fallback for navigations. Workflow actions are never cached.
-  if (request.mode === "navigate") {
-    event.respondWith(networkOnlyWithOfflineFallback(request));
-    return;
-  }
+  // Dynamic pages & GET data: Network-First with Cache Fallback
+  event.respondWith(networkFirst(request));
 });
 
-/* ---- Push notifications ---- */
+/* ---- Web Push Notifications ---- */
 self.addEventListener("push", (event) => {
   let data = {};
-  try {
-    data = event.data ? event.data.json() : {};
-  } catch (e) { /* ignore */ }
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      try {
+        data = { body: event.data.text() };
+      } catch (e2) {
+        data = {};
+      }
+    }
+  }
+
+  const title = data.title || "BG Command Centre";
   const options = {
-    body: data.body || "",
-    icon: "/static/icons/icon-192.png",
-    badge: "/static/icons/icon-192.png",
-    data: { url: data.url || "/" }
+    body: data.body || "You have a new update.",
+    icon: data.icon || "/static/icons/icon-192.png",
+    badge: data.badge || "/static/icons/icon-192.png",
+    tag: data.tag || ("bgcc-notification-" + (data.id || Date.now())),
+    data: {
+      url: data.url || "/notifications/",
+      id: data.id || null
+    },
+    requireInteraction: false
   };
-  event.waitUntil(self.registration.showNotification(data.title || "BG Command Centre", options));
+
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
+/* ---- Notification Click Handling ---- */
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data && event.notification.data.url ? event.notification.data.url : "/";
+  const rawUrl = (event.notification.data && event.notification.data.url) ? event.notification.data.url : "/notifications/";
+  const targetUrl = new URL(rawUrl, self.location.origin).href;
+
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
       for (const client of windowClients) {
-        if (client.url === url && "focus" in client) return client.focus();
+        if (client.url === targetUrl && "focus" in client) {
+          return client.focus();
+        }
       }
-      if (clients.openWindow) return clients.openWindow(url);
+      for (const client of windowClients) {
+        if ("focus" in client && "navigate" in client) {
+          return client.focus().then(() => client.navigate(targetUrl));
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
     })
   );
 });

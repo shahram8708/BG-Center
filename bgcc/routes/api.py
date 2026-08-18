@@ -112,19 +112,55 @@ def closure_eligibility(bg_id):
 @bp.route("/push/subscribe", methods=["POST"])
 @login_required
 def push_subscribe():
-    from flask import request
-
     data = request.get_json(silent=True) or {}
     subscription = data.get("subscription")
     if not subscription or not isinstance(subscription, dict):
-        return jsonify({"error": "A valid push subscription is required."}), 400
+        return jsonify({"error": "A valid push subscription object is required."}), 400
+
+    endpoint = subscription.get("endpoint")
+    keys = subscription.get("keys")
+    if not endpoint or not isinstance(keys, dict) or not keys.get("auth") or not keys.get("p256dh"):
+        return jsonify({"error": "Push subscription is missing required endpoint or encryption keys."}), 400
+
+    # Ensure no other user retains this identical endpoint
+    other_prefs = UserPreference.query.filter(UserPreference.user_id != current_user.id).all()
+    for other in other_prefs:
+        if other.push_subscription:
+            if isinstance(other.push_subscription, dict) and other.push_subscription.get("endpoint") == endpoint:
+                other.push_subscription = None
+            elif isinstance(other.push_subscription, list):
+                other.push_subscription = [
+                    s for s in other.push_subscription
+                    if isinstance(s, dict) and s.get("endpoint") != endpoint
+                ] or None
+
     prefs = UserPreference.query.filter_by(user_id=current_user.id).first()
     if prefs is None:
         prefs = UserPreference(user_id=current_user.id)
         db.session.add(prefs)
+
     prefs.push_subscription = subscription
+    prefs.notify_push = True
     db.session.commit()
-    return jsonify({"ok": True})
+    return jsonify({"ok": True, "message": "Push notifications enabled successfully."})
+
+
+@bp.route("/push/unsubscribe", methods=["POST"])
+@login_required
+def push_unsubscribe():
+    prefs = UserPreference.query.filter_by(user_id=current_user.id).first()
+    if prefs:
+        prefs.push_subscription = None
+        prefs.notify_push = False
+        db.session.commit()
+    return jsonify({"ok": True, "message": "Push notifications disabled."})
+
+
+@bp.route("/push/vapid-public-key")
+@login_required
+def push_vapid_public_key():
+    from flask import current_app
+    return jsonify({"vapid_public_key": current_app.config.get("VAPID_PUBLIC_KEY", "")})
 
 
 @bp.route("/parent-bg/search")

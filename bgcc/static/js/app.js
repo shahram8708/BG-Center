@@ -168,11 +168,32 @@
     });
   }
 
-  /* PWA: register the service worker and wire the install prompt. */
+  /* PWA: register the service worker and handle updates. */
   function registerServiceWorker() {
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", function () {
-        navigator.serviceWorker.register("/sw.js").catch(function () {});
+        navigator.serviceWorker
+          .register("/sw.js")
+          .then(function (registration) {
+            registration.update().catch(function () {});
+
+            if (registration.waiting) {
+              registration.waiting.postMessage({ type: "SKIP_WAITING" });
+            }
+
+            registration.addEventListener("updatefound", function () {
+              var newWorker = registration.installing;
+              if (!newWorker) return;
+              newWorker.addEventListener("statechange", function () {
+                if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                  newWorker.postMessage({ type: "SKIP_WAITING" });
+                }
+              });
+            });
+          })
+          .catch(function (err) {
+            console.warn("ServiceWorker registration error:", err);
+          });
       });
     }
   }
@@ -214,48 +235,135 @@
     apply();
   }
 
-  /* ---- Push subscription: contextual prompt, never on page load. */
+  /* ---- Push subscription: robust permission request and registration. */
   function initPushSubscription() {
-    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
     var enableBtn = document.querySelector("[data-enable-push]");
     if (!enableBtn) return;
-    enableBtn.addEventListener("click", function () {
+
+    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
       enableBtn.disabled = true;
-      enableBtn.textContent = "Requesting permission…";
+      enableBtn.innerHTML = '<i class="bi bi-bell-slash me-1"></i> Push not supported on this browser';
+      return;
+    }
+
+    if (Notification.permission === "denied") {
+      enableBtn.disabled = true;
+      enableBtn.innerHTML = '<i class="bi bi-bell-slash me-1"></i> Notifications blocked in browser settings';
+      return;
+    }
+
+    if (Notification.permission === "granted") {
+      navigator.serviceWorker.ready.then(function (reg) {
+        return reg.pushManager.getSubscription();
+      }).then(function (existingSub) {
+        if (existingSub) {
+          enableBtn.classList.remove("btn-outline-brand");
+          enableBtn.classList.add("btn-success");
+          enableBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i> Browser push is enabled';
+          var pushCheckbox = document.querySelector("[name='notify_push']");
+          if (pushCheckbox) pushCheckbox.checked = true;
+        }
+      }).catch(function () {});
+    }
+
+    enableBtn.addEventListener("click", function () {
+      if (!navigator.onLine) {
+        alert("You are currently offline. Please reconnect to the internet to enable push notifications.");
+        return;
+      }
+
+      enableBtn.disabled = true;
+      enableBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Requesting permission…';
+
       Notification.requestPermission().then(function (permission) {
-        if (permission !== "granted") {
-          enableBtn.textContent = "Notifications blocked";
+        if (permission === "denied") {
+          enableBtn.disabled = true;
+          enableBtn.classList.remove("btn-outline-brand", "btn-success");
+          enableBtn.classList.add("btn-danger");
+          enableBtn.innerHTML = '<i class="bi bi-x-circle me-1"></i> Notifications blocked in browser settings';
           return;
         }
-        navigator.serviceWorker.ready.then(function (reg) {
-          var vapid = document.querySelector("meta[name='vapid-public-key']");
-          var appKey = vapid ? vapid.getAttribute("content") : "";
-          var opts = appKey ? { userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(appKey) }
-                            : { userVisibleOnly: true };
-          return reg.pushManager.subscribe(opts);
-        }).then(function (sub) {
+        if (permission !== "granted") {
+          enableBtn.disabled = false;
+          enableBtn.innerHTML = '<i class="bi bi-bell me-1"></i> Enable browser push on this device';
+          return;
+        }
+
+        enableBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Subscribing…';
+
+        function getVapidKey() {
+          var vapidMeta = document.querySelector("meta[name='vapid-public-key']");
+          var key = vapidMeta ? vapidMeta.getAttribute("content") : "";
+          if (key && key.trim()) {
+            return Promise.resolve(key.trim());
+          }
+          return fetch("/api/push/vapid-public-key")
+            .then(function (r) { return r.json(); })
+            .then(function (d) { return d.vapid_public_key || ""; });
+        }
+
+        getVapidKey().then(function (appKey) {
+          if (!appKey) {
+            throw new Error("VAPID public key is missing or not configured on server.");
+          }
+          var applicationServerKey = urlBase64ToUint8Array(appKey);
+          return navigator.serviceWorker.ready.then(function (reg) {
+            return reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: applicationServerKey
+            });
+          });
+        }).then(function (subscription) {
           return fetch("/api/push/subscribe", {
             method: "POST",
-            headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken() },
-            body: JSON.stringify({ subscription: sub.toJSON() })
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": csrfToken()
+            },
+            body: JSON.stringify({ subscription: subscription.toJSON() })
           });
-        }).then(function (r) { return r.json(); })
-          .then(function () {
-            enableBtn.textContent = "Push notifications enabled";
-            var prefs = document.querySelector("[name='notify_push']");
-            if (prefs) prefs.checked = true;
-          })
-          .catch(function () { enableBtn.textContent = "Could not enable push"; });
+        }).then(function (res) {
+          if (!res.ok) {
+            return res.json().then(function (data) {
+              throw new Error(data.error || "Server rejected push subscription.");
+            });
+          }
+          return res.json();
+        }).then(function () {
+          enableBtn.disabled = false;
+          enableBtn.classList.remove("btn-outline-brand", "btn-danger", "btn-outline-danger");
+          enableBtn.classList.add("btn-success");
+          enableBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i> Push notifications enabled';
+          var pushCheckbox = document.querySelector("[name='notify_push']");
+          if (pushCheckbox) pushCheckbox.checked = true;
+        }).catch(function (err) {
+          console.error("Push subscription failed:", err);
+          enableBtn.disabled = false;
+          enableBtn.classList.remove("btn-outline-brand", "btn-success");
+          enableBtn.classList.add("btn-outline-danger");
+          enableBtn.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i> Could not enable push. Try again';
+        });
       });
     });
   }
 
   function urlBase64ToUint8Array(base64String) {
-    var padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-    var base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    if (!base64String) return new Uint8Array(0);
+    var str = base64String.trim();
+    if (/^[0-9a-fA-F]{130}$/.test(str)) {
+      var bytes = new Uint8Array(65);
+      for (var i = 0; i < 65; i++) {
+        bytes[i] = parseInt(str.substr(i * 2, 2), 16);
+      }
+      return bytes;
+    }
+    var padding = "=".repeat((4 - (str.length % 4)) % 4);
+    var base64 = (str + padding).replace(/-/g, "+").replace(/_/g, "/");
     var raw = atob(base64);
     var output = new Uint8Array(raw.length);
-    for (var i = 0; i < raw.length; ++i) output[i] = raw.charCodeAt(i);
+    for (var j = 0; j < raw.length; ++j) {
+      output[j] = raw.charCodeAt(j);
+    }
     return output;
   }
 

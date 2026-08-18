@@ -50,8 +50,9 @@ def send_notification(
             db.session.add(UserPreference(user_id=user.id))
             db.session.commit()
 
+        target_nid = notification_id
         # In-app channel: ensure row exists if not already created
-        if user and not notification_id:
+        if user and not target_nid:
             existing = Notification.query.filter_by(
                 user_id=user.id,
                 title=title,
@@ -67,7 +68,10 @@ def send_notification(
                 )
                 db.session.add(notification)
                 db.session.commit()
+                target_nid = notification.id
                 logger.info("Created in-app notification id=%s in worker task for user_id=%s", notification.id, user.id)
+            else:
+                target_nid = existing.id
 
         base_url = (template_context or {}).get("base_url") if isinstance(template_context, dict) else None
         base_url = base_url or get_base_url()
@@ -129,7 +133,14 @@ def send_notification(
 
         # Push channel: real web-push delivery.
         if user:
-            send_push(user, notification_type, title, body, link_url)
+            send_push(
+                user=user,
+                notification_type=notification_type,
+                title=title,
+                body=body,
+                link_url=link_url,
+                notification_id=target_nid,
+            )
 
         if job:
             job.status = JobStatus.completed.value

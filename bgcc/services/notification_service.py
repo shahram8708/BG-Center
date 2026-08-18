@@ -156,12 +156,21 @@ def dispatch(
                     template_name=template_name,
                     template_context=safe_context,
                 )
+            if user:
+                send_push(
+                    user=user,
+                    notification_type=notification_type,
+                    title=title,
+                    body=body,
+                    link_url=link_url,
+                    notification_id=notification.id if notification else None,
+                )
             job.status = JobStatus.completed.value
             job.completed_at = datetime.utcnow()
             db.session.commit()
-            logger.info("Fallback email delivery completed for job_id=%s", job.id)
+            logger.info("Fallback email and push delivery completed for job_id=%s", job.id)
         except Exception as fallback_exc:
-            logger.exception("Fallback email delivery failed for job_id=%s: %s", job.id, fallback_exc)
+            logger.exception("Fallback delivery failed for job_id=%s: %s", job.id, fallback_exc)
             job.status = JobStatus.failed.value
             job.error_message = str(fallback_exc)
             db.session.commit()
@@ -279,40 +288,98 @@ def send_email(
         raise
 
 
-def send_push_to_subscription(subscription, title, body, link_url=None):
+def send_push_to_subscription(
+    subscription, title, body, link_url=None, notification_id=None, user_id=None
+):
     """Send a real web-push notification to a browser subscription."""
     config = current_app.config
     vapid_public = config.get("VAPID_PUBLIC_KEY")
     vapid_private = config.get("VAPID_PRIVATE_KEY")
     if not (vapid_public and vapid_private) or not subscription:
-        logger.info(
-            "PUSH-SKIP title=%s (VAPID unconfigured or no subscription)",
-            title,
-        )
-        return
-    try:
-        from pywebpush import webpush
+        logger.info("PUSH-SKIP title=%s (VAPID unconfigured or no subscription)", title)
+        return False
 
-        payload = json.dumps({
-            "title": title,
-            "body": body,
-            "url": link_url or "/",
-        })
-        webpush(
-            subscription_info=subscription,
-            data=payload,
-            vapid_private_key=vapid_private,
-            vapid_claims={"sub": "mailto:" + config.get("VAPID_CLAIMS_EMAIL", "admin@bg.center")},
-        )
-        logger.info("PUSH-SENT title=%s", title)
-    except Exception:
-        logger.exception("PUSH-FAILED title=%s", title)
+    target_url = link_url
+    if notification_id and not target_url:
+        target_url = f"/notifications/{notification_id}/open"
+    elif not target_url:
+        target_url = "/notifications/"
+
+    payload = json.dumps({
+        "title": title or "BG Command Centre",
+        "body": body or "",
+        "url": target_url,
+        "id": notification_id,
+        "icon": "/static/icons/icon-192.png",
+        "badge": "/static/icons/icon-192.png",
+    })
+
+    claims = {"sub": "mailto:" + config.get("VAPID_CLAIMS_EMAIL", "admin@bg.center")}
+    subs = [subscription] if isinstance(subscription, dict) else (subscription if isinstance(subscription, list) else [])
+
+    from pywebpush import webpush, WebPushException
+
+    expired_endpoints = []
+    sent_count = 0
+
+    for sub in subs:
+        if not isinstance(sub, dict) or not sub.get("endpoint"):
+            continue
+        try:
+            webpush(
+                subscription_info=sub,
+                data=payload,
+                vapid_private_key=vapid_private,
+                vapid_claims=claims,
+                ttl=86400,
+                timeout=10,
+            )
+            sent_count += 1
+            logger.info("PUSH-SENT title='%s' to endpoint=%s", title, sub.get("endpoint")[:45])
+        except WebPushException as exc:
+            logger.warning("PUSH-FAILED WebPushException title='%s': %s", title, exc)
+            if exc.response is not None and exc.response.status_code in (404, 410):
+                logger.info("Push endpoint is expired/unregistered (status %s): %s", exc.response.status_code, sub.get("endpoint"))
+                expired_endpoints.append(sub.get("endpoint"))
+        except Exception as exc:
+            logger.exception("PUSH-FAILED title='%s' endpoint=%s: %s", title, sub.get("endpoint")[:45], exc)
+
+    if expired_endpoints and user_id:
+        try:
+            from bgcc.models.users import UserPreference
+            user_pref = UserPreference.query.filter_by(user_id=user_id).first()
+            if user_pref and user_pref.push_subscription:
+                if isinstance(user_pref.push_subscription, dict):
+                    if user_pref.push_subscription.get("endpoint") in expired_endpoints:
+                        user_pref.push_subscription = None
+                        user_pref.notify_push = False
+                elif isinstance(user_pref.push_subscription, list):
+                    user_pref.push_subscription = [
+                        s for s in user_pref.push_subscription
+                        if isinstance(s, dict) and s.get("endpoint") not in expired_endpoints
+                    ] or None
+                    if not user_pref.push_subscription:
+                        user_pref.notify_push = False
+                db.session.commit()
+                logger.info("Removed %d expired push endpoint(s) for user_id=%s", len(expired_endpoints), user_id)
+        except Exception as cleanup_exc:
+            logger.exception("Failed to clean up expired subscriptions: %s", cleanup_exc)
+            db.session.rollback()
+
+    return sent_count > 0
 
 
-def send_push(user, notification_type, title, body, link_url=None):
+def send_push(user, notification_type, title, body, link_url=None, notification_id=None):
     """Genuine web-push delivery via the user's stored push subscription."""
     if not user or not user.preferences:
-        return
-    if not user.preferences.notify_push:
-        return
-    send_push_to_subscription(user.preferences.push_subscription, title, body, link_url)
+        return False
+    if not user.preferences.notify_push or not user.preferences.push_subscription:
+        return False
+    return send_push_to_subscription(
+        subscription=user.preferences.push_subscription,
+        title=title,
+        body=body,
+        link_url=link_url,
+        notification_id=notification_id,
+        user_id=user.id,
+    )

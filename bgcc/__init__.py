@@ -213,59 +213,7 @@ def _auto_create_database(app):
     except Exception:
         pass
 
-    try:
-        _seed_initial_settings()
-    except Exception:
-        pass
+    from bgcc.services.seed_service import initialize_seed_data
 
+    initialize_seed_data(app)
 
-def _seed_initial_settings():
-    from bgcc.models.settings import ApplicationSetting
-    from bgcc.services.workflow_service import DEFAULT_DOA_MATRIX
-
-    defaults = {
-        "doa_matrix": DEFAULT_DOA_MATRIX,
-        "active_clause_template": {
-            "name": "Standard Active Template",
-            "clauses": [
-                {"reference": "2.1", "label": "Validity Period", "text": "This guarantee shall remain valid until..."},
-                {"reference": "3.1", "label": "First Demand Payable", "text": "Payable immediately upon first written demand..."},
-                {"reference": "4.1", "label": "Unconditional and Irrevocable", "text": "This guarantee is unconditional and irrevocable..."},
-                {"reference": "5.1", "label": "Return on Expiry", "text": "To be returned upon expiration or discharge..."},
-                {"reference": "6.1", "label": "Governing Law and Jurisdiction", "text": "Governed by the laws of India..."},
-                {"reference": "7.1", "label": "Signatures", "text": "Signed by authorized signatories of the issuing bank..."},
-            ],
-            "mandatory_clauses": ["2.1", "3.1", "4.1", "5.1", "6.1", "7.1"],
-        },
-        "prohibited_clause_patterns": [
-            {"pattern": r"(?i)conditional\s+on\s+court\s+order", "reason": "Restricts unconditional claim enforcement"},
-            {"pattern": r"(?i)subject\s+to\s+prior\s+arbitration", "reason": "Delays demand payment through mandatory arbitration"},
-            {"pattern": r"(?i)indemnity\s+bond\s+required", "reason": "Requires separate indemnity before honoring claim"},
-        ],
-        "checklist_definitions": {
-            "items": [
-                {"key": "stamp_duty", "label": "Stamp paper / duty adequate & stamped", "mandatory": True, "bg_types": ["pbg", "abg", "cpbg", "cpbg_cum_pbg", "cg"]},
-                {"key": "bank_sign", "label": "Issuing bank signature & seal verified", "mandatory": True, "bg_types": ["pbg", "abg", "cpbg", "cpbg_cum_pbg", "cg"]},
-                {"key": "claim_period", "label": "Claim period explicit and >= 30 days past expiry", "mandatory": True, "bg_types": ["pbg", "abg", "cpbg", "cpbg_cum_pbg", "cg"]},
-                {"key": "beneficiary_name", "label": "Beneficiary name matches company entity exactly", "mandatory": True, "bg_types": ["pbg", "abg", "cpbg", "cpbg_cum_pbg", "cg"]},
-            ]
-        },
-        "approved_banks": {
-            "banks": [
-                {"name": "State Bank of India", "short_code": "SBI", "contact_email": "bg.sbi@bank.com"},
-                {"name": "HDFC Bank", "short_code": "HDFC", "contact_email": "bg.hdfc@bank.com"},
-                {"name": "ICICI Bank", "short_code": "ICICI", "contact_email": "bg.icici@bank.com"},
-                {"name": "Axis Bank", "short_code": "AXIS", "contact_email": "bg.axis@bank.com"},
-                {"name": "Punjab National Bank", "short_code": "PNB", "contact_email": "bg.pnb@bank.com"},
-                {"name": "Bank of Baroda", "short_code": "BOB", "contact_email": "bg.bob@bank.com"},
-            ]
-        },
-        "extension_policy": {"warning_days": 30, "overdue_days": 7},
-        "invocation_policy": {"approaching_days": 15, "critical_days": 5},
-        "executive_contacts": {"cfo_email": "cfo@bg.center", "ceo_email": "ceo@bg.center"},
-    }
-
-    for key, val in defaults.items():
-        if not ApplicationSetting.query.filter_by(setting_key=key).first():
-            db.session.add(ApplicationSetting(setting_key=key, setting_value=val))
-    db.session.commit()
