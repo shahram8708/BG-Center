@@ -1,0 +1,119 @@
+<style>
+/* BG Command Centre - Lifecycle suite design pass.
+   Scoped to .lfc-shell / .lfc-exec so it only affects lifecycle pages. Matches the
+   project-wide refined identity (violet #7C3AED -> magenta #C026D3) used across folders. */
+.lfc-shell, .lfc-exec {
+  --lfc-primary: #7C3AED;
+  --lfc-accent: #C026D3;
+  --lfc-tint: #F5F3FF;
+  --lfc-ink: #111827;
+  --lfc-body: #374151;
+  --lfc-muted: #6B7280;
+  --lfc-border: #E5E7EB;
+  --lfc-border-strong: #D1D5DB;
+  --lfc-grad: linear-gradient(135deg, var(--lfc-primary), var(--lfc-accent));
+  --lfc-radius: 16px;
+  --lfc-radius-sm: 10px;
+  --lfc-shadow: 0 1px 2px rgba(17,24,39,.05), 0 10px 28px rgba(124,58,237,.08);
+  --lfc-shadow-hover: 0 12px 32px rgba(124,58,237,.18);
+  --lfc-transition: .22s cubic-bezier(.4,0,.2,1);
+  color: var(--lfc-body);
+}
+
+/* ---- Page header ---- */
+.lfc-page-head { margin-bottom: 1.4rem; }
+.lfc-eyebrow {
+  display: inline-flex; align-items: center; gap: .45rem;
+  font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--lfc-primary); background: var(--lfc-tint); border: 1px solid #E4DDFD;
+  padding: .28rem .7rem; border-radius: 999px; margin-bottom: .6rem;
+}
+.lfc-title { font-size: 1.6rem; font-weight: 800; color: var(--lfc-ink); letter-spacing: -.02em; margin-bottom: .2rem; }
+.lfc-subtitle { font-size: .92rem; color: var(--lfc-muted); margin-bottom: 0; }
+
+/* ---- Buttons ---- */
+.lfc-shell .btn-brand, .lfc-shell .btn-outline-brand, .lfc-shell .btn-outline-danger, .lfc-shell .btn-success {
+  border-radius: var(--lfc-radius-sm); font-weight: 600; transition: all var(--lfc-transition);
+}
+.lfc-shell .btn-brand { background: var(--lfc-grad); border: 1px solid transparent; color: #fff; box-shadow: 0 4px 14px rgba(124,58,237,.32); }
+.lfc-shell .btn-brand:hover { color: #fff; filter: brightness(1.06); box-shadow: 0 6px 20px rgba(124,58,237,.42); transform: translateY(-1px); }
+.lfc-shell .btn-brand:active { transform: translateY(0); }
+.lfc-shell .btn-outline-brand { border: 1px solid var(--lfc-border-strong); color: var(--lfc-primary); background: #fff; }
+.lfc-shell .btn-outline-brand:hover { border-color: var(--lfc-primary); color: #fff; background: var(--lfc-grad); }
+.lfc-shell .btn-outline-danger { border: 1px solid #F3C6C6; color: #DC2626; background: #fff; }
+.lfc-shell .btn-outline-danger:hover { background: #FEF2F2; border-color: #DC2626; color: #DC2626; }
+.lfc-shell .btn-success { background: #16A34A; border: 1px solid transparent; color: #fff; box-shadow: 0 4px 12px rgba(22,163,74,.3); }
+.lfc-shell .btn-success:hover { background: #15803D; color: #fff; }
+.lfc-shell .btn:focus-visible { outline: 2px solid var(--lfc-primary); outline-offset: 2px; }
+
+/* ---- Cards ---- */
+.lfc-card { background: #fff; border: 1px solid var(--lfc-border); border-radius: var(--lfc-radius); box-shadow: var(--lfc-shadow); overflow: hidden; margin-bottom: 1.25rem; }
+.lfc-card-head { display: flex; align-items: center; gap: .6rem; padding: .95rem 1.2rem; border-bottom: 1px solid var(--lfc-border); font-weight: 700; color: var(--lfc-ink); font-size: .95rem; }
+.lfc-card-head i { color: var(--lfc-primary); font-size: 1.05rem; }
+.lfc-card-head .lfc-count { margin-left: auto; font-size: .78rem; font-weight: 700; padding: .15rem .55rem; border-radius: 999px; background: var(--lfc-tint); color: var(--lfc-primary); }
+.lfc-card-body { padding: 1.3rem 1.4rem; }
+
+/* ---- List rows ---- */
+.lfc-row { padding: 1rem 1.2rem; display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+.lfc-row + .lfc-row { border-top: 1px solid var(--lfc-border); }
+.lfc-row-main { font-weight: 600; color: var(--lfc-ink); }
+.lfc-row-meta { font-size: .84rem; color: var(--lfc-muted); }
+.lfc-row-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-left: auto; }
+
+/* ---- Forms ---- */
+.lfc-field label { font-size: .84rem; font-weight: 600; color: var(--lfc-ink); display: block; margin-bottom: .35rem; }
+.lfc-field .form-control, .lfc-field .form-select, .lfc-row-actions .form-control, .lfc-row-actions .form-select {
+  border-radius: var(--lfc-radius-sm); border: 1px solid var(--lfc-border-strong); font-size: .9rem; color: var(--lfc-ink);
+  transition: border-color var(--lfc-transition), box-shadow var(--lfc-transition);
+}
+.lfc-field .form-control:focus, .lfc-field .form-select:focus, .lfc-row-actions .form-control:focus, .lfc-row-actions .form-select:focus {
+  border-color: var(--lfc-primary); box-shadow: 0 0 0 .2rem rgba(124,58,237,.16); outline: none;
+}
+.lfc-inline-form { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+
+/* ---- Badges / chips ---- */
+.lfc-badge { border-radius: 999px; font-weight: 600; font-size: .72rem; padding: .25em .7em; }
+.lfc-badge.warn { background: #FEF3C7; color: #92400E; }
+.lfc-badge.ok { background: #DCFCE7; color: #166534; }
+.lfc-badge.muted { background: #F3F4F6; color: var(--lfc-muted); border: 1px solid var(--lfc-border); }
+
+/* ---- Alerts (reasoning / justification) ---- */
+.lfc-alert { border-radius: var(--lfc-radius-sm); border: 1px solid var(--lfc-border); background: #F9FAFB; padding: .85rem 1rem; font-size: .86rem; }
+.lfc-alert.warn { border-color: #FDE68A; background: #FFFBEB; }
+.lfc-alert .lfc-alert-title { font-weight: 700; color: var(--lfc-ink); margin-bottom: .25rem; }
+
+/* ---- Meta facts grid ---- */
+.lfc-facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; }
+.lfc-fact { background: var(--lfc-tint); border-radius: var(--lfc-radius-sm); padding: .6rem .8rem; }
+.lfc-fact .lbl { font-size: .72rem; color: var(--lfc-muted); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.lfc-fact .val { font-size: .9rem; color: var(--lfc-ink); font-weight: 600; }
+
+/* ---- Empty ---- */
+.lfc-empty { text-align: center; padding: 2.4rem 1rem; color: var(--lfc-muted); font-size: .9rem; }
+.lfc-empty i { display: block; font-size: 1.6rem; color: #C4B5FD; margin-bottom: .4rem; }
+
+/* ---- Executive standalone pages ---- */
+.lfc-exec { background: #F8F7FC; }
+.lfc-exec .lfc-exec-card { border-radius: 20px; border: 1px solid var(--lfc-border); box-shadow: 0 24px 60px rgba(17,24,39,.14), 0 4px 14px rgba(124,58,237,.08); }
+.lfc-exec .btn-brand, .lfc-exec .btn-outline-danger, .lfc-exec .btn-outline-brand {
+  border-radius: var(--lfc-radius-sm); font-weight: 600; transition: all var(--lfc-transition);
+}
+.lfc-exec .btn-brand { background: var(--lfc-grad); border: 1px solid transparent; color: #fff; box-shadow: 0 4px 14px rgba(124,58,237,.32); }
+.lfc-exec .btn-brand:hover { color: #fff; filter: brightness(1.06); box-shadow: 0 6px 20px rgba(124,58,237,.42); transform: translateY(-1px); }
+.lfc-exec .btn-outline-danger { border: 1px solid #F3C6C6; color: #DC2626; background: #fff; }
+.lfc-exec .btn-outline-danger:hover { background: #FEF2F2; border-color: #DC2626; color: #DC2626; }
+.lfc-exec .btn-outline-brand { border: 1px solid var(--lfc-border-strong); color: var(--lfc-primary); background: #fff; }
+.lfc-exec .btn-outline-brand:hover { border-color: var(--lfc-primary); color: #fff; background: var(--lfc-grad); }
+.lfc-exec .lfc-exec-alert { border-radius: var(--lfc-radius-sm); border: 1px solid var(--lfc-border); background: #F9FAFB; font-size: .86rem; }
+.lfc-exec .lfc-exec-icon { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; width: 64px; height: 64px; background: var(--lfc-tint); color: var(--lfc-primary); }
+
+/* ---- Responsive ---- */
+@media (max-width: 767.98px) {
+  .lfc-title { font-size: 1.3rem; }
+  .lfc-page-head { margin-bottom: 1.1rem; }
+  .lfc-facts { grid-template-columns: 1fr; }
+  .lfc-row-actions { margin-left: 0; width: 100%; }
+  .lfc-inline-form { flex-direction: column; align-items: stretch; }
+  .lfc-card-body { padding: 1.1rem 1rem; }
+}
+</style>

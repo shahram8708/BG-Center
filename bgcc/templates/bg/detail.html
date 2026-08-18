@@ -1,0 +1,130 @@
+{% extends "layouts/app.html" %}
+{% from "macros/review.html" import extracted_fields_readonly, po_cross_check, format_checklist %}
+{% from "macros/status.html" import status_badge, tier_badge %}
+{% set active_nav = 'dashboard' %}
+{% block title %}{{ bg.bg_number }} · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "bg/_bg_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="bg-shell">
+  <div class="bg-page-head d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <div>
+      <div class="bg-eyebrow"><i class="bi bi-file-earmark-text"></i> Bank Guarantee record</div>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <h1 class="bg-title mb-0">{{ bg.bg_number }}</h1>
+        {{ status_badge(bg.status) }}
+      </div>
+      <p class="bg-subtitle mt-1">{{ bg.vendor_name or 'vendor' }} · {{ bg.amount }} {{ bg.currency }}</p>
+    </div>
+    <div class="bg-head-actions">
+      {% if show_shortcut %}
+        <a class="bg-btn bg-btn-primary" href="{{ url_for('approval.review', bg_id=bg.id) }}">
+          <i class="bi bi-pencil-square"></i> Review now
+        </a>
+      {% endif %}
+      <form method="post" action="{{ url_for('bg.generate_report', bg_id=bg.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="bg-btn bg-btn-ghost"><i class="bi bi-file-earmark-pdf"></i> Generate Comparison Report</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="bg-facts">
+    <div class="bg-fact"><div class="bg-fact-label">Vendor / beneficiary</div><div class="bg-fact-value">{{ bg.vendor_name or '-' }}</div></div>
+    <div class="bg-fact"><div class="bg-fact-label">Amount</div><div class="bg-fact-value">{{ bg.amount }} {{ bg.currency }}</div></div>
+    <div class="bg-fact"><div class="bg-fact-label">BG type</div><div class="bg-fact-value">{{ bg.bg_type | replace('_', ' ') | upper }}</div></div>
+    <div class="bg-fact"><div class="bg-fact-label">Expiry</div><div class="bg-fact-value">{{ bg.expiry_date }}</div></div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-7">
+      <div class="bg-card">
+        <div class="bg-card-head"><i class="bi bi-card-text"></i> Terms</div>
+        <div class="bg-card-body">{{ extracted_fields_readonly(fields) }}</div>
+      </div>
+      <div class="bg-card">
+        <div class="bg-card-head"><i class="bi bi-clipboard-check"></i> PO &amp; SAP cross-check</div>
+        <div class="bg-card-body">{{ po_cross_check(po_result) }}</div>
+      </div>
+      <div class="bg-card">
+        <div class="bg-card-head"><i class="bi bi-list-check"></i> Format &amp; physical checklist</div>
+        <div class="bg-card-body">{{ format_checklist(checklist, dispatch_readiness) }}</div>
+      </div>
+      <div class="bg-card">
+        <div class="bg-card-head"><i class="bi bi-layers"></i> Deviations</div>
+        <div class="bg-card-body">
+          {% if deviations %}
+            {% for d in deviations %}
+              <div class="bg-dev-row">
+                <span class="fw-semibold">{{ d.clause_reference }}</span>
+                {% if d.effective_tier == 'prohibited' and d.admin_override_by %}
+                  <span class="badge text-bg-danger">Prohibited - Admin Override Granted</span>
+                {% else %}
+                  {{ tier_badge(d.effective_tier) }}
+                {% endif %}
+                <span class="badge text-bg-light">{{ d.deviation_type | replace('_', ' ') | title }}</span>
+                {% if d.status != 'pending' %}<span class="badge {{ 'text-bg-success' if d.status == 'accepted' else 'text-bg-danger' }}">{{ d.status | title }}</span>{% endif %}
+                {% if d.admin_override_by %}<span class="badge text-bg-warning">Override</span>{% endif %}
+                <span class="bg-dev-summary">{{ d.template_text_summary }}</span>
+              </div>
+            {% endfor %}
+          {% else %}<div class="bg-empty">No deviations recorded.</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="bg-card">
+        <div class="bg-card-head"><i class="bi bi-clock-history"></i> Timeline</div>
+        <div class="bg-card-body compact">
+          {% if timeline %}
+            <div class="bg-timeline">
+              {% for h in timeline | reverse %}
+                <div class="bg-timeline-item">
+                  <span class="bg-timeline-badge">{{ h.action | replace('_', ' ') | title }}</span>
+                  <div class="bg-timeline-role">{{ h.actor_role | role_label if h.actor_role else 'System' }}</div>
+                  <div class="bg-timeline-time">{{ h.created_at | datetime_display }}</div>
+                  {% if h.from_stage or h.to_stage %}<div class="bg-timeline-stage">{{ h.from_stage | replace('_',' ') | title if h.from_stage }} → {{ h.to_stage | replace('_',' ') | title if h.to_stage }}</div>{% endif %}
+                  {% if h.comments %}<div class="bg-timeline-comment">{{ h.comments }}</div>{% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}<div class="bg-empty">No timeline events yet.</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="bg-card">
+        <div class="bg-card-head"><i class="bi bi-files"></i> Documents</div>
+        <div class="bg-card-body compact">
+          {% if documents %}
+            {% for doc in documents %}
+              <div class="bg-file-row">
+                <i class="bi bi-file-earmark-pdf bg-file-icon"></i>
+                <span class="bg-file-name">{{ doc.original_filename }}</span>
+                <a class="bg-btn bg-btn-ghost bg-btn-sm" href="{{ url_for('documents.view', doc_id=doc.id) }}" target="_blank" rel="noopener">View</a>
+              </div>
+            {% endfor %}
+          {% else %}<div class="bg-empty">No documents.</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="bg-card">
+        <div class="bg-card-head"><i class="bi bi-file-earmark-pdf"></i> Generated documents</div>
+        <div class="bg-card-body compact">
+          {% if generated %}
+            {% for g in generated %}
+              <div class="bg-file-row">
+                <i class="bi bi-file-earmark-pdf bg-file-icon alt"></i>
+                <span class="bg-file-name">Comparison Report v{{ g.version }} · {{ g.generated_at | datetime_display }}</span>
+                <a class="bg-btn bg-btn-ghost bg-btn-sm" href="{{ url_for('documents.generated_view', gen_id=g.id) }}" target="_blank" rel="noopener">View</a>
+              </div>
+            {% endfor %}
+          {% else %}<div class="bg-empty">No generated documents yet.</div>{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

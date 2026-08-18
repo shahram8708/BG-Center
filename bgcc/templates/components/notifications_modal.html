@@ -1,0 +1,31 @@
+{% include "components/_components_style.html" %}
+<div class="modal fade" id="notificationsModal" tabindex="-1" aria-labelledby="notificationsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:14px">
+      <div class="modal-header">
+        <h5 class="modal-title" id="notificationsModalLabel">Notifications</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {% if recent_notifications %}
+          {% for n in recent_notifications %}
+            <div class="d-flex gap-2 {% if not loop.last %}border-bottom pb-3 mb-3{% endif %}">
+              <span class="mt-1 avatar" style="width:30px;height:30px;font-size:.75rem"><i class="bi bi-bell"></i></span>
+              <div class="min-w-0">
+                <div class="fw-semibold text-dark">{{ n.title }}</div>
+                <div class="small text-body">{{ n.body }}</div>
+                <div class="small text-muted">{{ n.created_at | datetime_display }}</div>
+              </div>
+            </div>
+          {% endfor %}
+          <a class="btn btn-sm btn-outline-brand mt-2" href="{{ url_for('notifications.index') }}">View all notifications</a>
+        {% else %}
+          <div class="text-center text-muted py-4">
+            <i class="bi bi-bell-slash fs-2 d-block mb-2"></i>
+            <div>You're all caught up - no notifications yet.</div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>

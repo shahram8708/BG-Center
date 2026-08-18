@@ -1,0 +1,55 @@
+{% extends "layouts/public.html" %}
+{% block title %}Terms of Service · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "legal/_legal_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="lgl-shell row justify-content-center">
+  <div class="col-lg-9">
+    <div class="lgl-page-head">
+      <div class="lgl-eyebrow"><i class="bi bi-journal-text"></i> Terms &amp; conditions</div>
+      <h1 class="lgl-title mb-1">Terms of Service</h1>
+      <p class="lgl-subtitle">Last updated: August 2026</p>
+    </div>
+
+    <div class="lgl-card">
+      <div class="lgl-card-body">
+        <h2 class="lgl-section">Acceptance</h2>
+        <p class="lgl-body-text">
+          By accessing {{ app_name }}, you agree to these terms. Access is granted at the discretion
+          of the platform administrators and may be revoked at any time.
+        </p>
+
+        <h2 class="lgl-section">Acceptable use</h2>
+        <ul class="lgl-list">
+          <li>Use the platform only for its intended business purpose of managing Bank Guarantees.</li>
+          <li>Act only within the authority of your assigned role(s).</li>
+          <li>Provide accurate information and promptly report errors or suspicious activity.</li>
+          <li>Do not attempt to circumvent security, access controls, or rate limits.</li>
+          <li>Do not misuse AI-assisted output or represent automated analysis as final legal advice.</li>
+        </ul>
+
+        <h2 class="lgl-section">No legal advice</h2>
+        <p class="lgl-body-text">
+          {{ app_name }} facilitates workflows and provides AI-assisted analysis, but it does not
+          provide legal advice. Decisions with legal or financial consequences must be made and
+          approved by appropriately authorised personnel.
+        </p>
+
+        <h2 class="lgl-section">Account termination</h2>
+        <p class="lgl-body-text">
+          Access may be suspended or terminated where these terms or security policies are violated.
+          Suspension is without prejudice to the organization's other rights and remedies.
+        </p>
+
+        <h2 class="lgl-section">Changes</h2>
+        <p class="lgl-body-text mb-0">
+          These terms may be updated from time to time. Continued use of the platform after changes
+          constitutes acceptance of the revised terms.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

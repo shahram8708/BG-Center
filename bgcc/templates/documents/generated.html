@@ -1,0 +1,73 @@
+{% extends "layouts/app.html" %}
+{% set active_nav = 'generated' %}
+{% block title %}Generated Documents · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "documents/_documents_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="doc-shell">
+  <div class="doc-page-head">
+    <div class="doc-eyebrow"><i class="bi bi-file-earmark-pdf"></i> Archive</div>
+    <h1 class="doc-title">Generated Documents</h1>
+    <p class="doc-subtitle">Comparison Reports and other platform-generated files you're entitled to view.</p>
+  </div>
+
+  <form method="get" class="doc-filter mb-3">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label" for="q">Search by BG number</label>
+        <input name="q" id="q" value="{{ q }}" class="form-control form-control-sm" placeholder="e.g. BG-2026-">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="kind">Document kind</label>
+        <select name="kind" id="kind" class="form-select form-select-sm">
+          <option value="">All kinds</option>
+          {% for k in kinds %}<option value="{{ k }}" {% if kind == k %}selected{% endif %}>{{ k | replace('_', ' ') | title }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="doc-btn doc-btn-primary doc-btn-sm"><i class="bi bi-funnel"></i> Filter</button>
+        <a class="doc-btn doc-btn-ghost doc-btn-sm" href="{{ url_for('documents.generated') }}">Clear</a>
+      </div>
+    </div>
+  </form>
+
+  {% if docs %}
+    <div class="doc-card">
+      <div class="doc-table-wrap">
+        <table class="doc-table">
+          <thead>
+            <tr><th>BG</th><th>Kind</th><th>Version</th><th>Generated</th><th>By</th><th class="text-end">Action</th></tr>
+          </thead>
+          <tbody>
+            {% for g in docs %}
+              {% set bg = bg_map.get(g.bank_guarantee_id) %}
+              <tr>
+                <td class="cell-strong" data-label="BG">{{ bg.bg_number if bg else '-' }}</td>
+                <td data-label="Kind">{{ g.document_kind | replace('_', ' ') | title }}</td>
+                <td data-label="Version">v{{ g.version }}</td>
+                <td data-label="Generated">{{ g.generated_at | datetime_display }}</td>
+                <td data-label="By">{{ g.generated_by_user_id or '-' }}</td>
+                <td data-label="Action" class="text-end">
+                  <a class="doc-btn doc-btn-ghost doc-btn-sm" href="{{ url_for('documents.generated_view', gen_id=g.id) }}" target="_blank" rel="noopener"><i class="bi bi-eye"></i> View</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <div class="doc-card">
+      <div class="doc-card-body p-0">
+        <div class="doc-empty">
+          <span class="doc-empty-icon"><i class="bi bi-file-earmark-pdf"></i></span>
+          <div class="doc-empty-title">No generated documents</div>
+          <p class="doc-empty-text">Generate a Comparison Report from a Bank Guarantee's record and it will appear here.</p>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

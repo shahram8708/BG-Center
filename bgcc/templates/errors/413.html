@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}File too large · {{ app_name }}{% endblock %}
+{% block body %}
+{% include "errors/_errors_style.html" %}
+<div class="err-shell">
+<div class="d-flex flex-column min-vh-100">
+  <nav class="navbar navbar-bgcc sticky-top">
+    <div class="container">
+      <a class="brand-logo" href="/"><span class="brand-mark"><i class="bi bi-shield-check"></i></span><span>{{ app_name }}</span></a>
+    </div>
+  </nav>
+  <main class="flex-grow-1 d-flex align-items-center justify-content-center p-4">
+    <div class="text-center err-card">
+      <span class="err-icon"><i class="bi bi-file-earmark-exclamation"></i></span>
+      <div class="err-eyebrow"><i class="bi bi-database"></i> Upload error</div>
+      <h1 class="err-title">That file is too large</h1>
+      <p class="err-text">
+        The uploaded file exceeded the maximum allowed size. Please compress the file and try again,
+        or upload a smaller version.
+      </p>
+      <a class="err-btn" href="{{ url_for('dashboard.index') if current_user.is_authenticated and current_user.is_approved else url_for('auth.sign_in') }}"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+    </div>
+  </main>
+</div>
+</div>
+{% endblock %}

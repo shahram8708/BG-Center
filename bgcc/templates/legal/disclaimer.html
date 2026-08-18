@@ -1,0 +1,44 @@
+{% extends "layouts/public.html" %}
+{% block title %}AI Disclaimer · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "legal/_legal_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="lgl-shell row justify-content-center">
+  <div class="col-lg-9">
+    <div class="lgl-page-head">
+      <div class="lgl-eyebrow"><i class="bi bi-shield-check"></i> Responsible AI</div>
+      <h1 class="lgl-title mb-1">AI Disclaimer</h1>
+      <p class="lgl-subtitle">How we treat AI-generated information in {{ app_name }}.</p>
+    </div>
+
+    <div class="lgl-note">
+      <i class="bi bi-info-circle"></i>
+      <div>
+        <h2 class="lgl-section mb-2">Standing AI-assistance disclaimer</h2>
+        <p class="lgl-body-text mb-0">{{ disclaimer }}</p>
+      </div>
+    </div>
+
+    <div class="lgl-card">
+      <div class="lgl-card-body">
+        <h2 class="lgl-section">How it applies</h2>
+        <p class="lgl-body-text mb-3">
+          This disclaimer is the standing policy for every AI-assisted feature in the platform.
+          As individual AI capabilities (document extraction, clause-deviation analysis, policy
+          assistance and legal letter generation) are enabled, each feature will document its
+          specific AI usage, what is automated versus human-reviewed, and where the human
+          decision points remain.
+        </p>
+        <ul class="lgl-list">
+          <li>AI output is always presented for human review and is never silently final.</li>
+          <li>Any decision of legal or financial consequence is approved by an authorised person.</li>
+          <li>All AI-generated content must be verified against authoritative legal sources.</li>
+          <li>{{ app_name }} does not provide legal advice.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

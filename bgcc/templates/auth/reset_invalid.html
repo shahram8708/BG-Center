@@ -1,0 +1,22 @@
+{% extends "layouts/auth.html" %}
+{% block title %}Link no longer valid · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "auth/_auth_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  <div class="card auth-card shadow">
+    <div class="text-center">
+      <span class="auth-brand-mark"><i class="bi bi-clock-history"></i></span>
+      <div class="auth-eyebrow"><i class="bi bi-exclamation-triangle"></i> Link expired</div>
+      <h1 class="card-title mb-2" style="font-size:1.2rem">This link is no longer valid</h1>
+      <p class="card-sub mb-4">
+        Password reset links expire after 60 minutes and can only be used once.
+        Please request a fresh link to continue.
+      </p>
+      <a class="btn btn-brand w-100" href="{{ url_for('auth.forgot_password') }}">Request a new link</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

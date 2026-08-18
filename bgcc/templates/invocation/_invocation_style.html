@@ -1,0 +1,99 @@
+<style>
+/* BG Command Centre - Invocation Suite design pass.
+   Scoped to .inv-shell so it only affects invocation pages. Matches the project-wide
+   refined identity (violet #7C3AED -> magenta #C026D3) used across folders. */
+.inv-shell {
+  --inv-primary: #7C3AED;
+  --inv-accent: #C026D3;
+  --inv-tint: #F5F3FF;
+  --inv-ink: #111827;
+  --inv-body: #374151;
+  --inv-muted: #6B7280;
+  --inv-border: #E5E7EB;
+  --inv-border-strong: #D1D5DB;
+  --inv-grad: linear-gradient(135deg, var(--inv-primary), var(--inv-accent));
+  --inv-radius: 16px;
+  --inv-radius-sm: 10px;
+  --inv-shadow: 0 1px 2px rgba(17,24,39,.05), 0 10px 28px rgba(124,58,237,.08);
+  --inv-shadow-hover: 0 12px 32px rgba(124,58,237,.18);
+  --inv-transition: .22s cubic-bezier(.4,0,.2,1);
+  color: var(--inv-body);
+}
+
+/* ---- Page header ---- */
+.inv-page-head { margin-bottom: 1.4rem; }
+.inv-eyebrow {
+  display: inline-flex; align-items: center; gap: .45rem;
+  font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--inv-primary); background: var(--inv-tint); border: 1px solid #E4DDFD;
+  padding: .28rem .7rem; border-radius: 999px; margin-bottom: .6rem;
+}
+.inv-title { font-size: 1.6rem; font-weight: 800; color: var(--inv-ink); letter-spacing: -.02em; margin-bottom: .2rem; }
+.inv-subtitle { font-size: .92rem; color: var(--inv-muted); margin-bottom: 0; max-width: 640px; }
+
+/* ---- Buttons ---- */
+.inv-shell .btn-brand, .inv-shell .btn-outline-brand, .inv-shell .btn-outline-warning, .inv-shell .btn-outline-success, .inv-shell .btn-danger {
+  border-radius: var(--inv-radius-sm); font-weight: 600; transition: all var(--inv-transition);
+}
+.inv-shell .btn-brand { background: var(--inv-grad); border: 1px solid transparent; color: #fff; box-shadow: 0 4px 14px rgba(124,58,237,.32); }
+.inv-shell .btn-brand:hover { color: #fff; filter: brightness(1.06); box-shadow: 0 6px 20px rgba(124,58,237,.42); transform: translateY(-1px); }
+.inv-shell .btn-brand:active { transform: translateY(0); }
+.inv-shell .btn-outline-brand { border: 1px solid var(--inv-border-strong); color: var(--inv-primary); background: #fff; }
+.inv-shell .btn-outline-brand:hover { border-color: var(--inv-primary); color: #fff; background: var(--inv-grad); }
+.inv-shell .btn-outline-warning { border: 1px solid #FBBF24; color: #B45309; background: #FFFBEB; }
+.inv-shell .btn-outline-warning:hover { background: #FEF3C7; border-color: #F59E0B; color: #92400E; }
+.inv-shell .btn-outline-success { border: 1px solid #86EFAC; color: #15803D; background: #F0FDF4; }
+.inv-shell .btn-outline-success:hover { background: #DCFCE7; border-color: #22C55E; color: #166534; }
+.inv-shell .btn-danger { border: 1px solid #F3C6C6; color: #DC2626; background: #fff; }
+.inv-shell .btn-danger:hover { background: #FEF2F2; border-color: #DC2626; color: #DC2626; }
+.inv-shell .btn:focus-visible { outline: 2px solid var(--inv-primary); outline-offset: 2px; }
+
+/* ---- Cards ---- */
+.inv-card { background: #fff; border: 1px solid var(--inv-border); border-radius: var(--inv-radius); box-shadow: var(--inv-shadow); overflow: hidden; margin-bottom: 1.25rem; }
+.inv-card-head { display: flex; align-items: center; gap: .6rem; padding: .95rem 1.2rem; border-bottom: 1px solid var(--inv-border); font-weight: 700; color: var(--inv-ink); font-size: .95rem; }
+.inv-card-head i { color: var(--inv-primary); font-size: 1.05rem; }
+.inv-card-head .inv-head-sub { margin-left: auto; font-size: .8rem; font-weight: 500; color: var(--inv-muted); }
+.inv-card-body { padding: .4rem 0; }
+
+/* ---- List rows ---- */
+.inv-row { padding: 1rem 1.2rem; }
+.inv-row + .inv-row { border-top: 1px solid var(--inv-border); }
+.inv-row .inv-row-main { font-weight: 600; color: var(--inv-ink); }
+.inv-row .inv-row-meta { font-size: .82rem; color: var(--inv-muted); }
+.inv-row .inv-actions { display: flex; flex-wrap: wrap; gap: .55rem; align-items: center; margin-top: .7rem; }
+.inv-upload-form { display: flex; flex-wrap: wrap; gap: .55rem; align-items: center; }
+.inv-upload-form .form-control { border-radius: var(--inv-radius-sm); border: 1px solid var(--inv-border-strong); font-size: .82rem; padding: .32rem .55rem; }
+.inv-upload-form .form-control:focus { border-color: var(--inv-primary); box-shadow: 0 0 0 .2rem rgba(124,58,237,.16); outline: none; }
+.inv-upload-form .form-check-input:checked { background-color: var(--inv-primary); border-color: var(--inv-primary); }
+.inv-upload-form .form-check-input:focus { border-color: var(--inv-primary); box-shadow: 0 0 0 .2rem rgba(124,58,237,.16); }
+
+/* ---- Claim monitor ---- */
+.inv-claim { border-left: 4px solid transparent; }
+.inv-claim.critical { border-left-color: #DC2626; background: #FEF2F2; }
+.inv-claim.critical .inv-row-main { color: #B91C1C; }
+.inv-claim.critical .btn { margin-top: .4rem; }
+.inv-claim.standard .inv-row-meta i { color: var(--inv-muted); }
+
+/* ---- Dual-gate badges ---- */
+.inv-gate { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; margin-top: .3rem; }
+.inv-gate .badge { border-radius: 999px; font-weight: 600; font-size: .72rem; }
+.inv-gate .text-bg-success { background: #16A34A !important; }
+.inv-gate .text-bg-light { background: #F3F4F6 !important; color: var(--inv-muted) !important; border: 1px solid var(--inv-border); }
+.inv-gate .text-bg-warning { background: #F59E0B !important; color: #fff !important; }
+.inv-gate a { font-size: .78rem; color: var(--inv-primary); font-weight: 600; }
+
+/* ---- Empty ---- */
+.inv-empty { font-size: .9rem; color: var(--inv-muted); text-align: center; padding: 2rem 1rem; }
+.inv-empty i { display: block; font-size: 1.6rem; color: #C4B5FD; margin-bottom: .4rem; }
+
+/* ---- Responsive ---- */
+@media (max-width: 767.98px) {
+  .inv-title { font-size: 1.3rem; }
+  .inv-page-head { margin-bottom: 1.1rem; }
+  .inv-upload-form { flex-direction: column; align-items: stretch; }
+  .inv-upload-form .form-control { max-width: 100% !important; }
+  .inv-row .inv-actions { flex-direction: column; align-items: stretch; }
+  .inv-row .inv-actions form { width: 100%; }
+  .inv-row .inv-actions .btn { justify-content: center; }
+}
+</style>

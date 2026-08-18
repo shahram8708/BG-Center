@@ -1,0 +1,500 @@
+{% extends "layouts/app.html" %}
+{% set active_nav = 'admin' %}
+{% set tab = request.args.get('tab', 'doa') %}
+{% block title %}Platform Configuration · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "admin/_admin_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="admin-shell">
+  <div class="admin-page-head">
+    <div class="admin-eyebrow"><i class="bi bi-sliders"></i> Platform configuration</div>
+    <h1 class="admin-title">Platform Configuration</h1>
+    <p class="admin-subtitle">Edit every platform policy and reference setting. Changes apply only going forward.</p>
+  </div>
+
+  <nav class="admin-tabs" aria-label="Configuration sections">
+    <a class="admin-tab {{ 'active' if tab == 'doa' }}" href="?tab=doa"><i class="bi bi-diagram-3"></i> DoA &amp; Rules</a>
+    <a class="admin-tab {{ 'active' if tab == 'clause' }}" href="?tab=clause"><i class="bi bi-file-earmark-text"></i> Clause Compliance</a>
+    <a class="admin-tab {{ 'active' if tab == 'checklist' }}" href="?tab=checklist"><i class="bi bi-list-check"></i> Checklist &amp; Banks</a>
+    <a class="admin-tab {{ 'active' if tab == 'lifecycle' }}" href="?tab=lifecycle"><i class="bi bi-arrow-repeat"></i> Lifecycle Policy</a>
+    <a class="admin-tab {{ 'active' if tab == 'assistant' }}" href="?tab=assistant"><i class="bi bi-robot"></i> Assistant Content</a>
+    <a class="admin-tab {{ 'active' if tab == 'business_units' }}" href="?tab=business_units"><i class="bi bi-building"></i> Business Units</a>
+  </nav>
+
+{% if tab == 'doa' %}
+  {% set doa = ctx.doa %}
+  <form method="post" action="{{ url_for('admin.config_doa') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="admin-card mb-3">
+      <div class="admin-card-head"><i class="bi bi-diagram-3"></i> DoA matrix</div>
+      <div class="admin-card-body">
+        <div class="admin-field mb-4">
+          <label>CEO/CFO-stage trigger tier(s)</label>
+          <div class="d-flex flex-wrap gap-3">
+            {% for t, tl in tier_choices %}
+              <label class="admin-check">
+                <input class="form-check-input" type="checkbox" name="ceo_tiers" value="{{ t }}" {% if t in doa.get('ceo_cfo_condition', {}).get('on_tiers', []) %}checked{% endif %}>
+                <span class="form-check-label">{{ tl }}</span>
+              </label>
+            {% endfor %}
+          </div>
+          <div class="admin-hint">When a BG's highest deviation tier is one of these, it routes through the elevated CEO/CFO stage.</div>
+        </div>
+
+        <div class="admin-field">
+          <label>Deviation-tier visibility per role</label>
+          <div class="admin-hint mb-2">Which deviation tiers each role's Review Workspace displays and can act on.</div>
+          <div class="admin-table-wrap">
+            <table class="admin-table keep-header">
+              <thead><tr><th>Role</th>{% for t, tl in tier_choices %}<th class="text-center">{{ tl }}</th>{% endfor %}</tr></thead>
+              <tbody>
+                {% set vis = doa.get('deviation_visibility', {}) %}
+                {% for val, label in role_choices %}
+                  {% if val != 'admin' %}
+                  <tr>
+                    <td class="cell-strong">{{ label }}</td>
+                    {% for t, tl in tier_choices %}
+                      <td class="text-center">
+                        <input class="form-check-input" type="checkbox" name="vis_{{ val }}" value="{{ t }}"
+                          {% if t in (vis.get(val, ['low','high','prohibited']) if vis.get(val) else ['low','high','prohibited']) %}checked{% endif %}>
+                      </td>
+                    {% endfor %}
+                  </tr>
+                  {% endif %}
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="admin-reason mb-3">
+      <div class="admin-field">
+        <label for="reason">Reason for this change <span class="req">*</span></label>
+        <input id="reason" name="reason" class="form-control" placeholder="Why are you changing the DoA rules?" required>
+      </div>
+    </div>
+    <button type="submit" class="admin-btn admin-btn-primary"><i class="bi bi-check-lg"></i> Save DoA &amp; rules</button>
+  </form>
+
+{% elif tab == 'clause' %}
+  {% set clause = ctx.clause %}
+  <form method="post" action="{{ url_for('admin.config_clause') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="admin-card mb-3">
+      <div class="admin-card-head"><i class="bi bi-file-earmark-text"></i> Active clause template</div>
+      <div class="admin-card-body">
+        <div class="admin-field mb-3">
+          <label for="template_name">Template name</label>
+          <input id="template_name" name="template_name" value="{{ clause.get('name', '') }}" class="form-control">
+        </div>
+        <div class="admin-field">
+          <label>Clauses (repeatable)</label>
+          <div class="admin-repeater" data-repeat-list="clause">
+            {% for c in clause.get('clauses', []) %}
+              <div class="admin-row" data-clause-row>
+                <div class="row g-2">
+                  <div class="col-md-3"><input class="form-control form-control-sm" name="clause_ref_{{ loop.index0 }}" value="{{ c.get('reference', '') }}" placeholder="Reference (e.g. 2.1)"></div>
+                  <div class="col-md-3"><input class="form-control form-control-sm" name="clause_label_{{ loop.index0 }}" value="{{ c.get('label', '') }}" placeholder="Label"></div>
+                  <div class="col-md-6"><textarea class="form-control form-control-sm" name="clause_text_{{ loop.index0 }}" rows="2" placeholder="Expected clause text">{{ c.get('text', '') }}</textarea></div>
+                  <div class="col-12"><button type="button" class="admin-btn admin-btn-danger admin-btn-sm admin-row-remove" data-remove-row><i class="bi bi-trash3"></i> Remove</button></div>
+                </div>
+              </div>
+            {% else %}
+              <div class="admin-row" data-clause-row>
+                <div class="row g-2">
+                  <div class="col-md-3"><input class="form-control form-control-sm" name="clause_ref_0" placeholder="Reference (e.g. 2.1)"></div>
+                  <div class="col-md-3"><input class="form-control form-control-sm" name="clause_label_0" placeholder="Label"></div>
+                  <div class="col-md-6"><textarea class="form-control form-control-sm" name="clause_text_0" rows="2" placeholder="Expected clause text"></textarea></div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+          <button type="button" class="admin-add-btn" data-add-row="clause"><i class="bi bi-plus-lg"></i> Add clause</button>
+        </div>
+      </div>
+    </div>
+    <div class="admin-reason mb-3">
+      <div class="admin-field">
+        <label for="reason">Reason for this change <span class="req">*</span></label>
+        <input id="reason" name="reason" class="form-control" placeholder="Why are you changing the clause template?" required>
+      </div>
+    </div>
+    <button type="submit" class="admin-btn admin-btn-primary"><i class="bi bi-check-lg"></i> Save clause template</button>
+  </form>
+
+  <hr class="my-4 border-0" style="border-top:1px solid var(--admin-border)">
+
+  <form method="post" action="{{ url_for('admin.config_patterns') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="admin-card mb-3">
+      <div class="admin-card-head"><i class="bi bi-shield-exclamation"></i> Prohibited-clause patterns</div>
+      <div class="admin-card-body">
+        <p class="admin-hint mb-3">The deterministic safety layer flags a clause as Prohibited when any pattern here matches. This is separate from granting an override for a specific already-flagged clause.</p>
+        <div class="admin-repeater" data-repeat-list="pattern">
+          {% for r in (ctx.patterns if ctx.patterns is not string else []) %}
+            <div class="admin-row" data-pattern-row>
+              <div class="row g-2">
+                <div class="col-md-6"><input class="form-control form-control-sm" name="pattern_{{ loop.index0 }}" value="{{ r.get('pattern', '') }}" placeholder="Pattern or regex"></div>
+                <div class="col-md-5"><input class="form-control form-control-sm" name="pattern_label_{{ loop.index0 }}" value="{{ r.get('reason', '') }}" placeholder="Human-readable label"></div>
+                <div class="col-md-1 text-md-end"><button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-remove-row><i class="bi bi-trash3"></i></button></div>
+              </div>
+            </div>
+          {% else %}
+            <div class="admin-row" data-pattern-row>
+              <div class="row g-2">
+                <div class="col-md-6"><input class="form-control form-control-sm" name="pattern_0" placeholder="Pattern or regex"></div>
+                <div class="col-md-5"><input class="form-control form-control-sm" name="pattern_label_0" placeholder="Human-readable label"></div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        <button type="button" class="admin-add-btn" data-add-row="pattern"><i class="bi bi-plus-lg"></i> Add pattern</button>
+      </div>
+    </div>
+    <div class="admin-reason mb-3">
+      <div class="admin-field">
+        <label for="reason">Reason for this change <span class="req">*</span></label>
+        <input id="reason" name="reason" class="form-control" placeholder="Why are you changing the prohibited patterns?" required>
+      </div>
+    </div>
+    <button type="submit" class="admin-btn admin-btn-primary"><i class="bi bi-check-lg"></i> Save patterns</button>
+  </form>
+
+{% elif tab == 'checklist' %}
+  {% set checklist = ctx.checklist %}
+  <form method="post" action="{{ url_for('admin.config_checklist') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="admin-card mb-3">
+      <div class="admin-card-head"><i class="bi bi-list-check"></i> Checklist item definitions</div>
+      <div class="admin-card-body">
+        <div class="admin-repeater" data-repeat-list="checklist">
+          {% for item in checklist.get('items', []) %}
+            <div class="admin-row" data-checklist-row>
+              <div class="row g-2 align-items-center">
+                <div class="col-md-3"><input class="form-control form-control-sm" name="chk_key_{{ loop.index0 }}" value="{{ item.get('key', '') }}" placeholder="Key"></div>
+                <div class="col-md-3"><input class="form-control form-control-sm" name="chk_label_{{ loop.index0 }}" value="{{ item.get('label', '') }}" placeholder="Label"></div>
+                <div class="col-md-2 admin-check"><input class="form-check-input" type="checkbox" name="chk_mandatory_{{ loop.index0 }}" id="mand{{ loop.index0 }}" {% if item.get('mandatory') %}checked{% endif %}><label class="form-check-label" for="mand{{ loop.index0 }}">Mandatory</label></div>
+                <div class="col-md-3">
+                  <select name="chk_types_{{ loop.index0 }}" class="form-select form-select-sm" multiple size="2">
+                    {% for t, tl in bg_type_choices %}<option value="{{ t }}" {% if t in item.get('bg_types', []) %}selected{% endif %}>{{ tl }}</option>{% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-1 text-md-end"><button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-remove-row><i class="bi bi-trash3"></i></button></div>
+              </div>
+            </div>
+          {% else %}
+            <div class="admin-row" data-checklist-row>
+              <div class="row g-2">
+                <div class="col-md-3"><input class="form-control form-control-sm" name="chk_key_0" placeholder="Key"></div>
+                <div class="col-md-4"><input class="form-control form-control-sm" name="chk_label_0" placeholder="Label"></div>
+                <div class="col-md-2 admin-check"><input class="form-check-input" type="checkbox" name="chk_mandatory_0" id="mand0"><label class="form-check-label" for="mand0">Mandatory</label></div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        <button type="button" class="admin-add-btn" data-add-row="checklist"><i class="bi bi-plus-lg"></i> Add item</button>
+      </div>
+    </div>
+    <div class="admin-reason mb-3">
+      <div class="admin-field">
+        <label for="reason">Reason for this change <span class="req">*</span></label>
+        <input id="reason" name="reason" class="form-control" placeholder="Why are you changing the checklist?" required>
+      </div>
+    </div>
+    <button type="submit" class="admin-btn admin-btn-primary"><i class="bi bi-check-lg"></i> Save checklist</button>
+  </form>
+
+  <hr class="my-4 border-0" style="border-top:1px solid var(--admin-border)">
+
+  <form method="post" action="{{ url_for('admin.config_banks') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="admin-card mb-3">
+      <div class="admin-card-head"><i class="bi bi-bank"></i> Approved banks</div>
+      <div class="admin-card-body">
+        <div class="admin-repeater" data-repeat-list="bank">
+          {% for b in ctx.banks.get('banks', []) %}
+            <div class="admin-row" data-bank-row>
+              <div class="row g-2">
+                <div class="col-md-4"><input class="form-control form-control-sm" name="bank_name_{{ loop.index0 }}" value="{{ b.get('name', '') }}" placeholder="Bank name"></div>
+                <div class="col-md-3"><input class="form-control form-control-sm" name="bank_code_{{ loop.index0 }}" value="{{ b.get('short_code', '') }}" placeholder="Short code"></div>
+                <div class="col-md-4"><input class="form-control form-control-sm" name="bank_email_{{ loop.index0 }}" value="{{ b.get('contact_email', '') }}" placeholder="Contact email (optional)"></div>
+                <div class="col-md-1 text-md-end"><button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-remove-row><i class="bi bi-trash3"></i></button></div>
+              </div>
+            </div>
+          {% else %}
+            <div class="admin-row" data-bank-row>
+              <div class="row g-2">
+                <div class="col-md-4"><input class="form-control form-control-sm" name="bank_name_0" placeholder="Bank name"></div>
+                <div class="col-md-3"><input class="form-control form-control-sm" name="bank_code_0" placeholder="Short code"></div>
+                <div class="col-md-4"><input class="form-control form-control-sm" name="bank_email_0" placeholder="Contact email (optional)"></div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        <button type="button" class="admin-add-btn" data-add-row="bank"><i class="bi bi-plus-lg"></i> Add bank</button>
+      </div>
+    </div>
+    <div class="admin-reason mb-3">
+      <div class="admin-field">
+        <label for="reason">Reason for this change <span class="req">*</span></label>
+        <input id="reason" name="reason" class="form-control" placeholder="Why are you changing the approved banks?" required>
+      </div>
+    </div>
+    <button type="submit" class="admin-btn admin-btn-primary"><i class="bi bi-check-lg"></i> Save banks</button>
+  </form>
+
+{% elif tab == 'lifecycle' %}
+  <form method="post" action="{{ url_for('admin.config_lifecycle') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="admin-card mb-3">
+      <div class="admin-card-head"><i class="bi bi-arrow-repeat"></i> Extension policy</div>
+      <div class="admin-card-body">
+        <div class="row g-3">
+          <div class="col-md-3 admin-field"><label for="ext_warning_days">Warning days</label><input id="ext_warning_days" name="ext_warning_days" type="number" class="form-control" value="{{ ctx.extension.get('warning_days', 45) }}"></div>
+          <div class="col-md-3 admin-field"><label for="ext_overdue_days">Overdue days</label><input id="ext_overdue_days" name="ext_overdue_days" type="number" class="form-control" value="{{ ctx.extension.get('overdue_days', 21) }}"></div>
+        </div>
+      </div>
+    </div>
+    <div class="admin-card mb-3">
+      <div class="admin-card-head"><i class="bi bi-shield-exclamation"></i> Invocation policy</div>
+      <div class="admin-card-body">
+        <div class="row g-3">
+          <div class="col-md-3 admin-field"><label for="inv_approaching_days">Approaching days</label><input id="inv_approaching_days" name="inv_approaching_days" type="number" class="form-control" value="{{ ctx.invocation.get('approaching_days', 60) }}"></div>
+          <div class="col-md-3 admin-field"><label for="inv_critical_days">Critical days</label><input id="inv_critical_days" name="inv_critical_days" type="number" class="form-control" value="{{ ctx.invocation.get('critical_days', 14) }}"></div>
+        </div>
+      </div>
+    </div>
+    <div class="admin-card mb-3">
+      <div class="admin-card-head"><i class="bi bi-envelope"></i> Executive contacts</div>
+      <div class="admin-card-body">
+        <div class="row g-3">
+          <div class="col-md-4 admin-field"><label for="cfo_email">CFO email</label><input id="cfo_email" name="cfo_email" type="email" class="form-control" value="{{ ctx.contacts.get('cfo_email', '') }}"></div>
+          <div class="col-md-4 admin-field"><label for="ceo_email">CEO email</label><input id="ceo_email" name="ceo_email" type="email" class="form-control" value="{{ ctx.contacts.get('ceo_email', '') }}"></div>
+        </div>
+        <div class="admin-hint mt-2">Used by all magic-link approval flows (closures, invocation, invocation holds, bank verification).</div>
+      </div>
+    </div>
+    <div class="admin-reason mb-3">
+      <div class="admin-field">
+        <label for="reason">Reason for this change <span class="req">*</span></label>
+        <input id="reason" name="reason" class="form-control" placeholder="Why are you changing the lifecycle policy?" required>
+      </div>
+    </div>
+    <button type="submit" class="admin-btn admin-btn-primary"><i class="bi bi-check-lg"></i> Save lifecycle policy</button>
+  </form>
+
+{% elif tab == 'assistant' %}
+  <form method="post" action="{{ url_for('admin.config_assistant') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="admin-card mb-3">
+      <div class="admin-card-head"><i class="bi bi-robot"></i> Policy assistant reference content</div>
+      <div class="admin-card-body">
+        <div class="admin-repeater" data-repeat-list="section">
+          {% for s in ctx.assistant.get('sections', []) %}
+            <div class="admin-row" data-section-row>
+              <div class="admin-field mb-2"><input class="form-control" name="sec_title_{{ loop.index0 }}" value="{{ s.get('title', '') }}" placeholder="Section title"></div>
+              <div class="admin-field mb-2"><textarea class="form-control" name="sec_body_{{ loop.index0 }}" rows="3" placeholder="Explain the policy in plain language">{{ s.get('body', '') }}</textarea></div>
+              <div class="row align-items-center">
+                <div class="col"><input class="form-control form-control-sm" name="sec_link_{{ loop.index0 }}" value="{{ s.get('link', '') }}" placeholder="Related screen link (optional)"></div>
+                <div class="col-auto"><button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-remove-row><i class="bi bi-trash3"></i> Remove</button></div>
+              </div>
+            </div>
+          {% else %}
+            <div class="admin-row" data-section-row>
+              <div class="admin-field mb-2"><input class="form-control" name="sec_title_0" placeholder="Section title"></div>
+              <div class="admin-field mb-2"><textarea class="form-control" name="sec_body_0" rows="3" placeholder="Explain the policy in plain language"></textarea></div>
+            </div>
+          {% endfor %}
+        </div>
+        <button type="button" class="admin-add-btn" data-add-row="section"><i class="bi bi-plus-lg"></i> Add section</button>
+      </div>
+    </div>
+    <div class="admin-reason mb-3">
+      <div class="admin-field">
+        <label for="reason">Reason for this change <span class="req">*</span></label>
+        <input id="reason" name="reason" class="form-control" placeholder="Why are you changing the assistant content?" required>
+      </div>
+    </div>
+    <button type="submit" class="admin-btn admin-btn-primary"><i class="bi bi-check-lg"></i> Save assistant content</button>
+  </form>
+
+{% elif tab == 'business_units' %}
+  <form method="post" action="{{ url_for('admin.config_business_units') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="admin-card mb-3">
+      <div class="admin-card-head">
+        <i class="bi bi-building"></i> SAP Systems &amp; Business Units
+        <span class="admin-head-sub">Configure organizational business units, ERP system codes, and integration status</span>
+      </div>
+      <div class="admin-card-body">
+        <div class="admin-repeater" data-repeat-list="bu">
+          {% for bu in ctx.business_units %}
+            <div class="admin-bu-card" data-bu-row>
+              <input type="hidden" name="bu_id" value="{{ bu.id }}">
+              <div class="admin-bu-card-header">
+                <div class="admin-bu-card-title">
+                  <span class="admin-bu-index"><i class="bi bi-diagram-2"></i></span>
+                  <span class="bu-title-text">{{ bu.display_name or bu.business_unit or 'Business Unit #' ~ loop.index }}</span>
+                  <span class="admin-badge {{ 'admin-badge-success' if bu.is_active else 'admin-badge-light' }} bu-status-badge">
+                    {{ 'Active' if bu.is_active else 'Inactive' }}
+                  </span>
+                </div>
+                <button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-remove-row title="Remove business unit">
+                  <i class="bi bi-trash3"></i> Remove
+                </button>
+              </div>
+
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <div class="admin-field">
+                    <label class="form-label">Business Unit Name <span class="req">*</span></label>
+                    <input class="form-control" name="bu_business" value="{{ bu.business_unit }}" placeholder="e.g. Transmission & Distribution" required>
+                    <div class="admin-hint">Official division/department name used across workflows.</div>
+                  </div>
+                </div>
+
+                <div class="col-md-4">
+                  <div class="admin-field">
+                    <label class="form-label">Display Name <span class="req">*</span></label>
+                    <input class="form-control" name="bu_display" value="{{ bu.display_name }}" placeholder="e.g. Power Grid Division" required>
+                    <div class="admin-hint">User-friendly label displayed in intake dropdowns.</div>
+                  </div>
+                </div>
+
+                <div class="col-md-4">
+                  <div class="admin-field">
+                    <label class="form-label">System / BU Code <span class="req">*</span></label>
+                    <input class="form-control" name="bu_code" value="{{ bu.code }}" placeholder="e.g. BU-TD-01" pattern="[A-Za-z0-9_\-]+" title="Alphanumeric characters, dashes, and underscores only" required>
+                    <div class="admin-hint">Unique identifier mapped to SAP / ERP system.</div>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="admin-field">
+                    <label class="form-label">Description &amp; Operational Scope</label>
+                    <textarea class="form-control" name="bu_description" rows="2" placeholder="Brief description of operations, location, or BG portfolio covered by this unit...">{{ bu.description or '' }}</textarea>
+                    <div class="admin-hint">Optional context regarding operational boundary and purpose.</div>
+                  </div>
+                </div>
+
+                <div class="col-md-3">
+                  <div class="admin-field">
+                    <label class="form-label">Status <span class="req">*</span></label>
+                    <select class="form-select" name="bu_status">
+                      <option value="active" {% if bu.is_active %}selected{% endif %}>Active</option>
+                      <option value="inactive" {% if not bu.is_active %}selected{% endif %}>Inactive</option>
+                    </select>
+                    <div class="admin-hint">Inactive units cannot be chosen for new BGs.</div>
+                  </div>
+                </div>
+
+                <div class="col-md-3">
+                  <div class="admin-field">
+                    <label class="form-label">SAP Connection Type <span class="req">*</span></label>
+                    <select class="form-select" name="bu_connection_type">
+                      <option value="oauth" {% if bu.sap_connection_type == 'oauth' %}selected{% endif %}>OAuth 2.0 (REST API)</option>
+                      <option value="rfc" {% if bu.sap_connection_type == 'rfc' %}selected{% endif %}>SAP NetWeaver RFC</option>
+                      <option value="s4hana" {% if bu.sap_connection_type == 's4hana' %}selected{% endif %}>S/4HANA Cloud</option>
+                      <option value="manual" {% if bu.sap_connection_type == 'manual' %}selected{% endif %}>Manual / Offline</option>
+                    </select>
+                    <div class="admin-hint">Integration protocol for PO data exchange.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+
+          {% if not ctx.business_units %}
+            <div class="admin-bu-card" data-bu-row>
+              <input type="hidden" name="bu_id" value="">
+              <div class="admin-bu-card-header">
+                <div class="admin-bu-card-title">
+                  <span class="admin-bu-index"><i class="bi bi-diagram-2"></i></span>
+                  <span class="bu-title-text">New Business Unit</span>
+                  <span class="admin-badge admin-badge-success bu-status-badge">Active</span>
+                </div>
+                <button type="button" class="admin-btn admin-btn-danger admin-btn-sm" data-remove-row title="Remove business unit">
+                  <i class="bi bi-trash3"></i> Remove
+                </button>
+              </div>
+
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <div class="admin-field">
+                    <label class="form-label">Business Unit Name <span class="req">*</span></label>
+                    <input class="form-control" name="bu_business" placeholder="e.g. Transmission & Distribution" required>
+                    <div class="admin-hint">Official division/department name used across workflows.</div>
+                  </div>
+                </div>
+
+                <div class="col-md-4">
+                  <div class="admin-field">
+                    <label class="form-label">Display Name <span class="req">*</span></label>
+                    <input class="form-control" name="bu_display" placeholder="e.g. Power Grid Division" required>
+                    <div class="admin-hint">User-friendly label displayed in intake dropdowns.</div>
+                  </div>
+                </div>
+
+                <div class="col-md-4">
+                  <div class="admin-field">
+                    <label class="form-label">System / BU Code <span class="req">*</span></label>
+                    <input class="form-control" name="bu_code" placeholder="e.g. BU-TD-01" pattern="[A-Za-z0-9_\-]+" title="Alphanumeric characters, dashes, and underscores only" required>
+                    <div class="admin-hint">Unique identifier mapped to SAP / ERP system.</div>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="admin-field">
+                    <label class="form-label">Description &amp; Operational Scope</label>
+                    <textarea class="form-control" name="bu_description" rows="2" placeholder="Brief description of operations, location, or BG portfolio covered by this unit..."></textarea>
+                    <div class="admin-hint">Optional context regarding operational boundary and purpose.</div>
+                  </div>
+                </div>
+
+                <div class="col-md-3">
+                  <div class="admin-field">
+                    <label class="form-label">Status <span class="req">*</span></label>
+                    <select class="form-select" name="bu_status">
+                      <option value="active" selected>Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                    <div class="admin-hint">Inactive units cannot be chosen for new BGs.</div>
+                  </div>
+                </div>
+
+                <div class="col-md-3">
+                  <div class="admin-field">
+                    <label class="form-label">SAP Connection Type <span class="req">*</span></label>
+                    <select class="form-select" name="bu_connection_type">
+                      <option value="oauth" selected>OAuth 2.0 (REST API)</option>
+                      <option value="rfc">SAP NetWeaver RFC</option>
+                      <option value="s4hana">S/4HANA Cloud</option>
+                      <option value="manual">Manual / Offline</option>
+                    </select>
+                    <div class="admin-hint">Integration protocol for PO data exchange.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+        <button type="button" class="admin-add-btn mt-3" data-add-row="bu"><i class="bi bi-plus-lg"></i> Add business unit</button>
+      </div>
+    </div>
+    <div class="admin-reason mb-3">
+      <div class="admin-field">
+        <label for="reason">Reason for this change <span class="req">*</span></label>
+        <input id="reason" name="reason" class="form-control" placeholder="Why are you changing business units?" required>
+      </div>
+    </div>
+    <button type="submit" class="admin-btn admin-btn-primary"><i class="bi bi-check-lg"></i> Save business units</button>
+  </form>
+{% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/admin.js"></script>
+{% endblock %}

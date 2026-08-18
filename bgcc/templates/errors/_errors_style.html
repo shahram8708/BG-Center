@@ -1,0 +1,70 @@
+<style>
+/* BG Command Centre - Error pages design pass.
+   Scoped to .err-shell so it only affects error pages. Matches the project-wide
+   refined identity (violet #7C3AED -> magenta #C026D3) used across redesigned
+   folders. */
+.err-shell {
+  --err-primary: #7C3AED;
+  --err-accent: #C026D3;
+  --err-tint: #F5F3FF;
+  --err-ink: #111827;
+  --err-muted: #6B7280;
+  --err-grad: linear-gradient(135deg, var(--err-primary), var(--err-accent));
+  --err-radius: 14px;
+  --err-transition: .22s cubic-bezier(.4,0,.2,1);
+}
+.err-shell { min-height: 100%; }
+
+/* ---- Navbar brand (preserve existing classes) ---- */
+.err-shell .navbar-bgcc { background: rgba(255,255,255,.9); backdrop-filter: blur(8px); }
+
+/* ---- Error code ---- */
+.err-code {
+  font-size: 6rem; font-weight: 800; line-height: 1; letter-spacing: -.03em;
+  background: var(--err-grad); -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; margin-bottom: .4rem;
+}
+
+/* ---- Icon treatment for 413/offline ---- */
+.err-icon {
+  width: 76px; height: 76px; border-radius: 22px; margin: 0 auto 1.2rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--err-tint); color: var(--err-primary); font-size: 2rem;
+  box-shadow: 0 8px 22px rgba(124,58,237,.2);
+}
+
+/* ---- Content ---- */
+.err-card { max-width: 500px; }
+.err-eyebrow {
+  display: inline-flex; align-items: center; gap: .45rem;
+  font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--err-primary); background: var(--err-tint); border: 1px solid #E4DDFD;
+  padding: .28rem .7rem; border-radius: 999px; margin-bottom: .7rem;
+}
+.err-title { font-size: 1.3rem; font-weight: 800; color: var(--err-ink); margin-bottom: .5rem; }
+.err-text { font-size: .92rem; color: var(--err-muted); margin-bottom: 1.25rem; }
+
+/* ---- Incident reference ---- */
+.err-incident {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: var(--err-tint); color: var(--err-primary);
+  border-radius: 8px; padding: .15rem .6rem; font-size: .82rem; font-weight: 600;
+}
+
+/* ---- Button ---- */
+.err-btn {
+  display: inline-flex; align-items: center; gap: .45rem; border-radius: var(--err-radius);
+  font-weight: 600; padding: .6rem 1.15rem; font-size: .92rem; border: 1px solid transparent;
+  background: var(--err-grad); color: #fff; text-decoration: none; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(124,58,237,.35); transition: all var(--err-transition);
+}
+.err-btn:hover { color: #fff; filter: brightness(1.06); box-shadow: 0 6px 20px rgba(124,58,237,.45); transform: translateY(-1px); }
+.err-btn:active { transform: translateY(0); }
+.err-btn:focus-visible { outline: 2px solid var(--err-primary); outline-offset: 2px; }
+
+/* ---- Responsive ---- */
+@media (max-width: 575.98px) {
+  .err-code { font-size: 4.5rem; }
+  .err-title { font-size: 1.1rem; }
+}
+</style>

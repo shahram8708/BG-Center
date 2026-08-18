@@ -1,0 +1,54 @@
+{% extends "layouts/public.html" %}
+{% block title %}About &amp; Overview · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "legal/_legal_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="lgl-shell row justify-content-center">
+  <div class="col-lg-9">
+    <div class="lgl-page-head">
+      <div class="lgl-eyebrow"><i class="bi bi-broadcast"></i> About the platform</div>
+      <h1 class="lgl-title mb-1">About {{ app_name }}</h1>
+      <p class="lgl-subtitle">One authoritative system for the complete lifecycle of Bank Guarantees.</p>
+    </div>
+
+    <div class="lgl-card">
+      <div class="lgl-card-body">
+        <p class="lgl-body-text mb-3">
+          {{ app_name }} manages the complete lifecycle of Bank Guarantees (BGs) for our
+          multi-business-unit organization - replacing a fragmented stack of spreadsheets,
+          email approval threads and manual SAP cross-referencing with one authoritative platform.
+        </p>
+        <p class="lgl-body-text mb-0">
+          Every approver sees an already-assembled picture of the facts before making a decision.
+          AI accelerates the work but never silently finalizes anything of legal or financial
+          consequence, and every deadline is tracked by policy timers rather than human memory.
+        </p>
+      </div>
+    </div>
+
+    <h2 class="lgl-section">Lifecycle stages</h2>
+    <div class="row g-3">
+      {% set stages = [
+        ('Intake & AI validation', 'bi-cloud-upload', 'Upload, AI-assisted extraction, PO/SAP cross-check and clause-deviation analysis.'),
+        ('Approval workflow', 'bi-clipboard2-check', 'Multi-stage delegation-of-authority approvals with a full decision history.'),
+        ('Extension, closure & return', 'bi-arrow-repeat', 'Proactive extension management, closure eligibility and physical hardcopy return.'),
+        ('Invocation & legal letters', 'bi-shield-exclamation', 'The invocation pipeline with dual-gate bank-send logic.'),
+        ('Reporting & portfolio', 'bi-graph-up', 'Analytics, a portfolio dashboard and the AI policy assistant.')
+      ] %}
+      {% for title, icon, text in stages %}
+        <div class="col-md-6">
+          <div class="lgl-stage">
+            <span class="lgl-stage-icon flex-shrink-0"><i class="bi {{ icon }}"></i></span>
+            <div>
+              <div class="lgl-stage-title">{{ title }}</div>
+              <div class="lgl-stage-text">{{ text }}</div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

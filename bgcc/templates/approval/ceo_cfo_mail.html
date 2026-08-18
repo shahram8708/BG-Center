@@ -1,0 +1,74 @@
+{% extends "layouts/app.html" %}
+{% from "macros/status.html" import status_badge %}
+{% set active_nav = 'ceo_cfo_mail' %}
+{% block title %}CEO/CFO Mail Attachments · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "approval/_approval_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="apv-shell">
+  <div class="apv-page-head">
+    <div class="apv-eyebrow"><i class="bi bi-envelope-check"></i> Elevated sign-off</div>
+    <h1 class="apv-title">CEO/CFO Mail Attachments</h1>
+    <p class="apv-subtitle">Attach offline email evidence of CEO/CFO sign-off for your Bank Guarantees.</p>
+  </div>
+
+  {% if bgs %}
+    {% for bg in bgs %}
+      <div class="apv-card apv-card-hover mb-3">
+        <div class="apv-card-body">
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            <span class="cell-strong" style="color:var(--apv-ink);font-weight:700">{{ bg.bg_number }}</span>
+            {{ status_badge(bg.status) }}
+            <span class="apv-hint">{{ bg.vendor_name or 'vendor' }} · {{ bg.amount }} {{ bg.currency }}</span>
+          </div>
+          <div class="apv-alert apv-alert-info">
+            This Bank Guarantee requires elevated CEO/CFO sign-off. Obtain the approval via email, then attach the
+            evidence below. Submitting advances it to ABEX verification.
+          </div>
+
+          <form method="post" enctype="multipart/form-data" data-ceo-form>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="bg_id" value="{{ bg.id }}">
+            <div class="row g-3">
+              <div class="col-md-6 apv-field">
+                <label for="file-{{ bg.id }}">Approval evidence (PDF) <span class="req">*</span></label>
+                <input type="file" name="file" id="file-{{ bg.id }}" accept="application/pdf,.pdf" class="form-control" required>
+              </div>
+              <div class="col-md-3 apv-field">
+                <label for="ref-{{ bg.id }}">Reference / date (optional)</label>
+                <input type="text" name="reference" id="ref-{{ bg.id }}" class="form-control" placeholder="e.g. email dated 12 Aug">
+              </div>
+            </div>
+            <div class="apv-check mt-3">
+              <input class="form-check-input" type="checkbox" name="confirm" id="confirm-{{ bg.id }}" data-ceo-confirm="{{ bg.id }}">
+              <label class="form-check-label" for="confirm-{{ bg.id }}">
+                I confirm this represents genuine CEO/CFO sign-off received via email.
+              </label>
+            </div>
+            <div class="mt-3">
+              <button type="submit" class="apv-btn apv-btn-primary" data-ceo-submit="{{ bg.id }}" disabled>
+                <i class="bi bi-paperclip"></i> Attach evidence &amp; advance to ABEX
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="apv-card">
+      <div class="apv-card-body">
+        <div class="apv-empty">
+          <span class="apv-empty-icon"><i class="bi bi-envelope-check"></i></span>
+          <div class="apv-empty-title">No CEO/CFO sign-offs pending</div>
+          <p class="apv-empty-text">When one of your Bank Guarantees reaches the elevated CEO/CFO stage, it will appear here for you to attach the approval evidence.</p>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/approval.js"></script>
+{% endblock %}

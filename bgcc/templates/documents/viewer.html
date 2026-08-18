@@ -1,0 +1,29 @@
+{% extends "layouts/app.html" %}
+{% block title %}{{ doc.original_filename }} · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "documents/_documents_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="doc-shell">
+  <div class="doc-page-head d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <nav class="doc-breadcrumb" aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+        {% if bg %}
+          <li class="breadcrumb-item"><a href="{{ url_for('bg.detail', bg_id=bg.id) }}">{{ bg.bg_number }}</a></li>
+        {% endif %}
+        <li class="breadcrumb-item active" aria-current="page">{{ doc.original_filename }}</li>
+      </ol>
+    </nav>
+    <div class="doc-head-actions">
+      <a class="doc-btn doc-btn-ghost doc-btn-sm" href="{{ url_for('documents.raw', doc_id=doc.id) }}" target="_blank" rel="noopener">
+        <i class="bi bi-box-arrow-up-right"></i> Open full
+      </a>
+    </div>
+  </div>
+  <div class="doc-viewer">
+    <iframe src="{{ raw_url }}" title="{{ doc.original_filename }}" class="doc-viewer-frame"></iframe>
+  </div>
+</div>
+{% endblock %}

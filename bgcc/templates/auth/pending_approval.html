@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Pending approval · {{ app_name }}{% endblock %}
+{% block body %}
+{% include "auth/_auth_style.html" %}
+<div class="auth-shell">
+<div class="d-flex flex-column min-vh-100">
+  <nav class="navbar navbar-bgcc sticky-top">
+    <div class="container">
+      <a class="brand-logo" href="/">
+        <span class="brand-mark"><i class="bi bi-shield-check"></i></span>
+        <span>BG Command Centre</span>
+      </a>
+    </div>
+  </nav>
+  <main class="flex-grow-1 d-flex align-items-center">
+    <div class="container" style="max-width:520px">
+      <div class="card auth-card shadow text-center mx-auto">
+        <span class="auth-brand-mark"><i class="bi bi-hourglass-split"></i></span>
+        <div class="auth-eyebrow"><i class="bi bi-clock"></i> In review</div>
+        <h1 class="card-title mb-2">Your request is pending approval</h1>
+        <p class="card-sub">
+          Thanks, <strong>{{ current_user.full_name }}</strong>. Your request to join
+          {{ app_name }} was submitted on
+          <strong>{{ current_user.created_at | datetime_display }}</strong>.
+        </p>
+        <p class="card-sub mb-4">
+          A platform administrator is reviewing it. You'll receive an email as soon as
+          your account is approved - there's nothing more you need to do right now.
+        </p>
+        <form method="post" action="{{ url_for('auth.logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-outline-brand w-100">Sign out</button>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends "layouts/app.html" %}
+{% from "macros/forms.html" import floating_select %}
+{% set active_nav = 'upload_extended' %}
+{% block title %}Upload Extended BG · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "intake/_intake_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="in-shell">
+  <div class="in-page-head">
+    <div class="in-eyebrow"><i class="bi bi-arrow-repeat"></i> Extension intake</div>
+    <h1 class="in-title">Upload an Extended BG</h1>
+    <p class="in-subtitle">File a bank-issued extension against a live parent Bank Guarantee.</p>
+  </div>
+
+  <div class="in-stepper">
+    <div class="in-step"><span class="in-step-dot active">1</span><span class="in-step-label active">Details</span></div>
+    <span class="in-step-connector"></span>
+    <div class="in-step"><span class="in-step-dot">2</span><span class="in-step-label">Validation</span></div>
+    <span class="in-step-connector"></span>
+    <div class="in-step"><span class="in-step-dot">3</span><span class="in-step-label">Review</span></div>
+    <span class="in-step-connector"></span>
+    <div class="in-step"><span class="in-step-dot">4</span><span class="in-step-label">Dispatch</span></div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" novalidate data-intake-form data-submit-gate>
+    {{ form.hidden_tag() }}
+    <div class="in-card">
+      <div class="in-card-head"><i class="bi bi-link-45deg"></i> Parent Bank Guarantee</div>
+      <div class="in-card-body">
+        <div class="in-field">
+          <label for="{{ form.parent_bg_id.id }}">Search &amp; select the live parent BG <span class="req">*</span></label>
+          <input type="text" class="form-control mb-2" data-parent-search placeholder="Search by BG number…" aria-label="Search parent BG">
+          {{ form.parent_bg_id(class_="form-select" + (' is-invalid' if form.parent_bg_id.errors else ''), data_parent_select="1") }}
+          {% for e in form.parent_bg_id.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="row g-3 mt-1 in-parent-summary" data-parent-summary style="display:none">
+          <div class="in-parent-fact"><div class="lbl">SAP system</div><div class="val" data-parent-sap>-</div></div>
+          <div class="in-parent-fact"><div class="lbl">BG type</div><div class="val" data-parent-type>-</div></div>
+          <div class="in-parent-fact"><div class="lbl">Format / expenditure</div><div class="val" data-parent-format>-</div></div>
+          <div class="in-parent-fact"><div class="lbl">Current expiry</div><div class="val" data-parent-expiry>-</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="in-card">
+      <div class="in-card-head"><i class="bi bi-calendar3"></i> New extended BG dates</div>
+      <div class="in-card-body">
+        <p class="in-muted small">These are checked immediately against the parent's expiry before validation runs.</p>
+        <div class="row g-3">
+          <div class="col-md-6 in-field">
+            <label for="{{ form.issue_date.id }}">{{ form.issue_date.label.text }} <span class="req">*</span></label>
+            {{ form.issue_date(class_='form-control' + (' is-invalid' if form.issue_date.errors else ''), type='date') }}
+            {% for e in form.issue_date.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="col-md-6 in-field">
+            <label for="{{ form.expiry_date.id }}">{{ form.expiry_date.label.text }} <span class="req">*</span></label>
+            {{ form.expiry_date(class_='form-control' + (' is-invalid' if form.expiry_date.errors else ''), type='date') }}
+            {% for e in form.expiry_date.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="in-card">
+      <div class="in-card-head"><i class="bi bi-file-earmark-text"></i> Document</div>
+      <div class="in-card-body">
+        <div class="mt-1 mb-2">
+          <label class="form-label" style="font-weight:600;color:var(--in-ink)">Purchase Order number(s) <span style="color:#DC2626">*</span></label>
+          <div class="chip-input in-chip" data-chip-input>
+            <input type="text" data-chip-input-field placeholder="Type a PO number and press Enter" aria-label="Purchase order number">
+            <div data-chip-list></div>
+          </div>
+          <div class="form-text">Add one or more PO numbers. All POs must belong to the same vendor.</div>
+          <div class="invalid-feedback d-block" data-chip-error style="display:none"></div>
+          {% if extra_errors.get('po_number') %}<div class="invalid-feedback d-block">{{ extra_errors['po_number'] }}</div>{% endif %}
+        </div>
+
+        <div class="mt-3">
+          <label class="form-label" style="font-weight:600;color:var(--in-ink)">Extended Bank Guarantee document (PDF) <span style="color:#DC2626">*</span></label>
+          <div class="drop-zone in-drop" data-drop-zone>
+            <input type="file" name="file" accept="application/pdf,.pdf" data-file-input aria-label="Attach PDF">
+            <div class="drop-zone-empty">
+              <div class="dz-icon"><i class="bi bi-cloud-arrow-up"></i></div>
+              <div class="fw-semibold">Drag &amp; drop your PDF here, or <span style="color:var(--in-primary)">browse</span></div>
+              <div class="text-muted small">Digital or scanned PDF up to {{ max_mb }} MB.</div>
+            </div>
+            <div class="drop-zone-file">
+              <i class="bi bi-file-earmark-pdf-fill fs-2 text-danger"></i>
+              <div class="fw-semibold" data-file-name></div>
+              <div class="text-muted small">Click to choose a different file.</div>
+            </div>
+          </div>
+          <div class="invalid-feedback d-block" data-file-error style="display:none"></div>
+          {% if extra_errors.get('file') %}<div class="invalid-feedback d-block">{{ extra_errors['file'] }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+      <button type="submit" class="in-btn in-btn-primary in-btn-lg">Start validation <i class="bi bi-arrow-right ms-1"></i></button>
+    </div>
+  </form>
+</div>
+
+<script>window.__parentMeta = {{ parent_meta | tojson }};</script>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/intake.js"></script>
+<script>initUploadForm();</script>
+{% endblock %}

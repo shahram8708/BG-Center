@@ -1,0 +1,171 @@
+{% extends "layouts/app.html" %}
+{% from "macros/review.html" import extracted_fields_readonly, po_cross_check, format_checklist, prior_decisions, deviation_card %}
+{% from "macros/status.html" import status_badge, tier_badge %}
+{% set active_nav = 'approval_queue' %}
+{% block title %}Review {{ bg.bg_number }} · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "approval/_approval_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="apv-shell">
+  <div class="apv-page-head d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <div>
+      <div class="apv-eyebrow"><i class="bi bi-pencil-square"></i> Review workspace</div>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <h1 class="apv-title mb-0">{{ bg.bg_number }}</h1>
+        {{ status_badge(bg.status) }}
+      </div>
+      <p class="apv-subtitle mt-1">{{ bg.vendor_name or 'vendor' }} · {{ bg.amount }} {{ bg.currency }} · reviewing as {{ role | role_label }}</p>
+    </div>
+    {% if document_id %}
+      <div class="apv-head-actions">
+        <a class="apv-btn apv-btn-ghost" href="{{ url_for('documents.view', doc_id=document_id) }}" target="_blank" rel="noopener">
+          <i class="bi bi-file-earmark-pdf"></i> Open source document
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if requires_ceo %}
+    <div class="apv-alert apv-alert-warn">
+      <i class="bi bi-exclamation-triangle me-1"></i> <strong>CEO/CFO sign-off will be required next.</strong>
+      This Bank Guarantee's highest risk tier is {{ highest_tier | title or '-' }}, so it will route through elevated CEO/CFO approval before ABEX verification.
+    </div>
+  {% endif %}
+
+  {% if highest_tier == 'prohibited' %}
+    {% set unoverridden = visible | selectattr('effective_tier', 'equalto', 'prohibited') | selectattr('admin_override_by', 'none') | list %}
+    {% if unoverridden %}
+      <div class="apv-alert apv-alert-danger">
+        <i class="bi bi-lock-fill me-1"></i> <strong>This Bank Guarantee carries a prohibited-tier deviation that has not been overridden and cannot be forwarded.</strong>
+        The Approve &amp; Forward action is disabled until a platform administrator grants an override.
+      </div>
+    {% else %}
+      <div class="apv-alert apv-alert-warn">
+        <i class="bi bi-shield-check me-1"></i> <strong>Prohibited-tier deviations have been overridden by an administrator.</strong>
+        The Bank Guarantee may proceed, though the clauses remain recorded as Prohibited.
+      </div>
+    {% endif %}
+  {% endif %}
+
+  <!-- Workflow Pipeline Progress -->
+  {% if stage_info and stage_info.stages %}
+    <div class="apv-card mb-3">
+      <div class="apv-card-head"><i class="bi bi-diagram-3"></i> Approval Workflow Pipeline
+        <span class="apv-head-sub">
+          {% if is_final %}Final Stage · Verification &amp; Activation{% elif next_role %}Next: {{ stage_info.next_label }}{% endif %}
+        </span>
+      </div>
+      <div class="apv-card-body">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 pb-2 border-bottom">
+          <div>
+            <span class="apv-detail-label">Current Stage</span>
+            <div class="d-flex align-items-center gap-2 mt-1">
+              <span class="fw-bold text-dark">{{ role | role_label }}</span>
+              <span class="badge text-bg-primary">Stage {{ stage_info.current_index + 1 }} of {{ stage_info.total_stages }}</span>
+            </div>
+          </div>
+          <div>
+            <span class="apv-detail-label">Next Action</span>
+            <div class="fw-semibold text-dark mt-1">
+              {% if is_final %}
+                <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Activate as Live</span>
+              {% elif next_role %}
+                <span class="text-primary"><i class="bi bi-arrow-right-circle me-1"></i>Forward to {{ stage_info.next_label }}</span>
+              {% else %}
+                <span class="text-muted">Terminal</span>
+              {% endif %}
+            </div>
+          </div>
+          <div>
+            <span class="apv-detail-label">Expenditure Type</span>
+            <div class="fw-semibold text-dark mt-1 text-uppercase">{{ bg.expenditure_type.value if bg.expenditure_type else 'OPEX' }}</div>
+          </div>
+        </div>
+
+        <div class="apv-stepper">
+          {% for st in stage_info.stages %}
+            <div class="apv-step-node {% if st.is_current %}current{% elif st.is_completed %}completed{% else %}upcoming{% endif %}">
+              <div class="apv-step-circle">
+                {% if st.is_completed %}
+                  <i class="bi bi-check-lg"></i>
+                {% else %}
+                  {{ st.order }}
+                {% endif %}
+              </div>
+              <div class="apv-step-name">{{ st.label }}</div>
+            </div>
+            {% if not loop.last %}
+              <div class="apv-step-connector {% if st.is_completed %}completed{% endif %}"></div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('approval.decide', bg_id=bg.id) }}" data-workspace-form>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="apv-card mb-3">
+      <div class="apv-card-head"><i class="bi bi-card-text"></i> Extracted fields
+        <span class="apv-head-sub">Read-only for approvers.</span></div>
+      <div class="apv-card-body">{{ extracted_fields_readonly(fields) }}</div>
+    </div>
+
+    <div class="apv-card mb-3">
+      <div class="apv-card-head"><i class="bi bi-clipboard-check"></i> PO &amp; SAP cross-check</div>
+      <div class="apv-card-body">{{ po_cross_check(po_result) }}</div>
+    </div>
+
+    <div class="apv-card mb-3">
+      <div class="apv-card-head"><i class="bi bi-layers"></i> Clause deviations &amp; decisions
+        <span class="apv-head-sub">
+          {% if is_tc %}You can adjust risk tiers (deterministic floor still applies).{% else %}Record a decision for every deviation.{% endif %}
+        </span></div>
+      <div class="apv-card-body">
+        {% if visible %}
+          {% for d in visible %}
+            {{ deviation_card(d, is_tc, rules) }}
+          {% endfor %}
+        {% else %}
+          <div class="apv-hint">No deviations visible to your role.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="apv-card mb-3">
+      <div class="apv-card-head"><i class="bi bi-list-check"></i> Format &amp; physical checklist
+        {% if is_abex %}<span class="apv-head-sub">Confirmed during verification.</span>{% endif %}</div>
+      <div class="apv-card-body">{{ format_checklist(checklist, dispatch_readiness) }}</div>
+    </div>
+
+    <div class="apv-card mb-3">
+      <div class="apv-card-head"><i class="bi bi-clock-history"></i> Prior decisions &amp; timeline</div>
+      <div class="apv-card-body">{{ prior_decisions(prior_events, history) }}</div>
+    </div>
+
+    <div class="apv-card mb-3">
+      <div class="apv-card-head"><i class="bi bi-chat-square-text"></i> Overall comment</div>
+      <div class="apv-card-body">
+        <textarea class="form-control" name="overall_comment" rows="2" data-overall-comment placeholder="Add context for the next approver (required to Reject, and recommended on forward)." style="border-radius:10px;border-color:var(--apv-border-strong)"></textarea>
+      </div>
+    </div>
+
+    <div class="apv-actionbar">
+      <div class="apv-enable-hint" data-enable-hint>Complete all decisions to enable submission.</div>
+      <button type="submit" name="action" value="reject" class="apv-btn apv-btn-danger" data-reject><i class="bi bi-x-lg"></i> Reject</button>
+      {% if is_abex %}
+        <button type="submit" name="action" value="verify" class="apv-btn apv-btn-primary" data-forward disabled><i class="bi bi-check-lg"></i> Verify &amp; Activate</button>
+      {% else %}
+        <button type="submit" name="action" value="forward" class="apv-btn apv-btn-primary" data-forward disabled><i class="bi bi-check-lg"></i> Approve &amp; Forward</button>
+      {% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/approval.js"></script>
+<script>initWorkspace();</script>
+{% endblock %}

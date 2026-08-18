@@ -1,0 +1,100 @@
+{% extends "emails/base.html" %}
+
+{% block preheader %}Access request from {{ applicant_name | default('New User') }} for BG Command Centre{% endblock %}
+
+{% block header_tag %}Access Request{% endblock %}
+
+{% block badge_area %}
+<div style="margin-bottom: 16px;">
+  <span style="display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; padding: 4px 10px; border-radius: 4px; background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a;">
+    Access Request
+  </span>
+</div>
+{% endblock %}
+
+{% block heading %}
+<h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #0f172a; line-height: 1.35;">
+  New User Access Request
+</h1>
+{% endblock %}
+
+{% block content %}
+<div style="font-size: 15px; line-height: 1.65; color: #334155; margin-bottom: 20px;">
+  <p style="margin: 0 0 4px 0; font-size: 17px; font-weight: 700; color: #0f172a;">
+    {{ applicant_name | default('New Applicant') }}
+  </p>
+  <p style="margin: 0 0 14px 0; color: #2563eb; font-weight: 500;">
+    {{ applicant_email | default(email | default('Applicant Email')) }}
+  </p>
+  <p style="margin: 0 0 12px 0;">
+    has requested access to <strong>BG Command Centre</strong>.
+  </p>
+  <p style="margin: 0 0 12px 0;">
+    Please review this request and take the appropriate action from your administration panel.
+  </p>
+</div>
+{% endblock %}
+
+{% block details_table %}
+<div style="margin: 20px 0;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;">
+    <tr>
+      <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #64748b; border-bottom: 1px solid #e2e8f0; width: 38%; background-color: #f1f5f9;">
+        Applicant Name
+      </td>
+      <td style="padding: 10px 14px; font-size: 13px; font-weight: 700; color: #0f172a; border-bottom: 1px solid #e2e8f0; width: 62%;">
+        {{ applicant_name | default('New Applicant') }}
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #64748b; border-bottom: 1px solid #e2e8f0; width: 38%; background-color: #f1f5f9;">
+        Work Email
+      </td>
+      <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #0f172a; border-bottom: 1px solid #e2e8f0; width: 62%;">
+        {{ applicant_email | default(email | default('n/a')) }}
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #64748b; border-bottom: 1px solid #e2e8f0; width: 38%; background-color: #f1f5f9;">
+        Requested Roles
+      </td>
+      <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #0f172a; border-bottom: 1px solid #e2e8f0; width: 62%;">
+        {{ roles | default('Standard User') }}
+      </td>
+    </tr>
+    {% if sap_system_name %}
+    <tr>
+      <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #64748b; width: 38%; background-color: #f1f5f9;">
+        SAP System / BU
+      </td>
+      <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #0f172a; width: 62%;">
+        {{ sap_system_name }} {% if sap_system_code %}({{ sap_system_code }}){% endif %}
+      </td>
+    </tr>
+    {% endif %}
+  </table>
+</div>
+{% endblock %}
+
+{% block action_button %}
+  {% set target_url = (action_url or link_url or '/admin/users') | absolute_url %}
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 28px 0 20px 0;">
+    <tr>
+      <td align="center">
+        <table border="0" cellpadding="0" cellspacing="0" class="btn-table">
+          <tr>
+            <td align="center" style="border-radius: 6px; background-color: #2563eb;">
+              <a href="{{ target_url }}" target="_blank" class="btn-link" style="display: inline-block; padding: 14px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #2563eb; text-align: center;">
+                Review Access Request &rarr;
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; margin-top: 16px; font-size: 12px; color: #64748b; line-height: 1.4; word-break: break-all;">
+    <strong>Direct link:</strong> <a href="{{ target_url }}" style="color: #2563eb; text-decoration: underline;">{{ target_url }}</a>
+  </div>
+{% endblock %}

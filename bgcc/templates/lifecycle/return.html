@@ -1,0 +1,74 @@
+{% extends "layouts/app.html" %}
+{% set active_nav = 'bg_return' %}
+{% block title %}BG Return · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "lifecycle/_lifecycle_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="lfc-shell">
+  <div class="lfc-page-head">
+    <div class="lfc-eyebrow"><i class="bi bi-arrow-return-left"></i> Hardcopy returns</div>
+    <h1 class="lfc-title mb-1">BG Return</h1>
+    <p class="lfc-subtitle mb-0">Raise and track physical hardcopy returns.</p>
+  </div>
+
+  <div class="lfc-card">
+    <div class="lfc-card-head"><i class="bi bi-plus-circle"></i> Eligible Bank Guarantees <span class="lfc-count">{{ eligible | length }}</span></div>
+    {% if eligible %}
+      {% for bg in eligible %}
+        {% set ret = ret_by_bg.get(bg.id) %}
+        <div class="lfc-row">
+          <div class="flex-grow-1" style="min-width:200px">
+            <div class="lfc-row-main">{{ bg.bg_number }}</div>
+            <div class="lfc-row-meta">{{ bg.vendor_name or 'vendor' }} · {{ bg.amount }} {{ bg.currency }}</div>
+          </div>
+          <div class="lfc-row-actions">
+            {% if ret is none %}
+              <form method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="request">
+                <input type="hidden" name="bg_id" value="{{ bg.id }}">
+                <button class="btn btn-sm btn-brand" type="submit">Raise return request</button>
+              </form>
+            {% elif ret.status == 'requested' %}
+              <span class="lfc-badge warn">Requested</span>
+              <form method="post" class="lfc-inline-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="dispatch">
+                <input type="hidden" name="bg_id" value="{{ bg.id }}">
+                <select name="dispatch_mode" class="form-select form-select-sm" style="width:auto">
+                  <option value="">Mode…</option>
+                  <option value="courier">Courier</option>
+                  <option value="cmr">CMR</option>
+                </select>
+                <input class="form-control form-control-sm" name="courier_name" placeholder="Courier name" style="width:130px">
+                <input class="form-control form-control-sm" name="tracking_number" placeholder="Tracking no." style="width:130px">
+                <input class="form-control form-control-sm" name="cmr_deliverer_name" placeholder="Deliverer name" style="width:130px">
+                <input class="form-control form-control-sm" name="cmr_deliverer_mobile" placeholder="Deliverer mobile" style="width:130px">
+                <button class="btn btn-sm btn-outline-brand" type="submit">Mark dispatched</button>
+              </form>
+            {% elif ret.status == 'dispatched' %}
+              <span class="lfc-badge" style="background:#EDE9FE;color:var(--lfc-primary)">Dispatched</span>
+              <form method="post" class="lfc-inline-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="confirm_receipt">
+                <input type="hidden" name="bg_id" value="{{ bg.id }}">
+                <input class="form-control form-control-sm" name="note" placeholder="Receipt note (optional)" style="width:180px">
+                <button class="btn btn-sm btn-success" type="submit">Confirm receipt</button>
+              </form>
+            {% else %}
+              <span class="lfc-badge ok">Receipt confirmed</span>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="lfc-empty"><i class="bi bi-arrow-return-left"></i>No eligible Bank Guarantees for a return right now.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/lifecycle.js"></script>
+{% endblock %}

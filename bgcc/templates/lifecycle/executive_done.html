@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Approval recorded' if approved else 'Declined' }} · {{ app_name }}{% endblock %}
+{% block head %}
+{% include "lifecycle/_lifecycle_style.html" %}
+{% endblock %}
+{% block body %}
+<div class="d-flex flex-column min-vh-100 lfc-exec">
+  <nav class="navbar navbar-bgcc sticky-top">
+    <div class="container">
+      <a class="brand-logo" href="/"><span class="brand-mark"><i class="bi bi-shield-check"></i></span><span>{{ app_name }}</span></a>
+    </div>
+  </nav>
+  <main class="flex-grow-1 d-flex align-items-center py-4">
+    <div class="container" style="max-width:520px">
+      <div class="card shadow lfc-exec-card text-center mx-auto">
+        <div class="card-body p-4">
+          <span class="d-inline-flex align-items-center justify-content-center rounded-circle mx-auto mb-3" style="width:72px;height:72px;background:{{ 'var(--success)' if approved else 'var(--danger)' }};color:#fff">
+            <i class="bi {{ 'bi-check-lg' if approved else 'bi-x-lg' }} fs-1"></i>
+          </span>
+          <h1 class="fs-4 mb-2" style="color:var(--lfc-ink)">{{ 'Approval recorded' if approved else 'Approval declined' }}</h1>
+          <p class="text-muted small mb-4">
+            {% if approved %}Thank you - your approval has been recorded and the relevant workflow has advanced.
+            {% else %}This approval has been declined and the closure attempt has been terminated.{% endif %}
+          </p>
+          <p class="small text-muted">You can close this window.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}

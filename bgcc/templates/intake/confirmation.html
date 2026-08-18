@@ -1,0 +1,29 @@
+{% extends "layouts/app.html" %}
+{% set active_nav = 'dashboard' %}
+{% block title %}Submitted · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "intake/_intake_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="in-shell mx-auto text-center" style="max-width:600px">
+  <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success-subtle text-success mb-3" style="width:80px;height:80px">
+    <i class="bi bi-check-lg fs-1"></i>
+  </span>
+  <h1 class="in-title mb-2">Bank Guarantee submitted</h1>
+  <p class="in-muted mb-1">
+    <strong>{{ bg.bg_number }}</strong> has been submitted{% if is_extension %} as an extension of its parent guarantee{% endif %}
+    and is now <strong>awaiting Buyer approval</strong>.
+  </p>
+  <p class="in-muted small mb-4">
+    The Buyer for your business unit has been notified. You'll be able to track its progress from the
+    portfolio and approval views in a later stage of the build.
+  </p>
+  <div class="d-flex flex-wrap justify-content-center gap-2">
+    <a class="in-btn in-btn-primary" href="{{ url_for('intake.upload_bg' if not is_extension else 'intake.upload_extended') }}">
+      <i class="bi bi-plus-lg me-1"></i> Upload another
+    </a>
+    <a class="in-btn in-btn-ghost" href="{{ url_for('dashboard.index') }}">Back to Dashboard</a>
+  </div>
+</div>
+{% endblock %}

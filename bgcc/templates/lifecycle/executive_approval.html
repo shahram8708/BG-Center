@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{{ ctx.title }} · {{ app_name }}{% endblock %}
+{% block head %}
+{% include "lifecycle/_lifecycle_style.html" %}
+{% endblock %}
+{% block body %}
+<div class="d-flex flex-column min-vh-100 lfc-exec">
+  <nav class="navbar navbar-bgcc sticky-top">
+    <div class="container">
+      <a class="brand-logo" href="/"><span class="brand-mark"><i class="bi bi-shield-check"></i></span><span>{{ app_name }}</span></a>
+    </div>
+  </nav>
+  <main class="flex-grow-1 d-flex align-items-center py-4">
+    <div class="container" style="max-width:560px">
+      <div class="card shadow lfc-exec-card mx-auto">
+        <div class="card-body p-4">
+          <div class="text-center mb-4">
+            <span class="lfc-exec-icon mb-3">
+              <i class="bi bi-patch-check fs-2"></i>
+            </span>
+            <h1 class="fs-4 mb-1" style="color:var(--lfc-ink)">{{ ctx.title }}</h1>
+            <p class="text-muted small mb-0">{{ ctx.subject }}</p>
+          </div>
+
+          {% if closure and bg %}
+            <div class="lfc-exec-alert small mb-3 p-3">
+              <div class="fw-semibold mb-1">Bank Guarantee: {{ bg.bg_number }}</div>
+              <div class="mb-1">Vendor: {{ bg.vendor_name or '-' }} · Amount: {{ bg.amount }} {{ bg.currency }}</div>
+              <div>Eligibility: {{ closure.eligibility_reasoning }}</div>
+            </div>
+          {% endif %}
+          {% if bank_verification and bg %}
+            <div class="lfc-exec-alert small mb-3 p-3">
+              <div class="fw-semibold mb-1">Bank Guarantee: {{ bg.bg_number }}</div>
+              <div class="mb-1">Vendor: {{ bg.vendor_name or '-' }} · Amount: {{ bg.amount }} {{ bg.currency }}</div>
+              <div class="small text-muted mt-1">
+                Confirm whether this guarantee, said to have been issued by your bank, is genuine.
+                Confirm the authenticity, or dispute it if your records do not show this guarantee.
+              </div>
+            </div>
+          {% endif %}
+          {% if invocation and bg %}
+            <div class="lfc-exec-alert small mb-3 p-3">
+              <div class="fw-semibold mb-1">Bank Guarantee: {{ bg.bg_number }}</div>
+              <div class="mb-1">Vendor: {{ bg.vendor_name or '-' }} · Amount: {{ bg.amount }} {{ bg.currency }}</div>
+              <div>Stage: {{ invocation.stage | replace('_', ' ') | title }}</div>
+              {% if invocation.stage == 'on_hold' %}
+                <div class="small text-muted mt-1">This approval is part of the sequential confirmation of a hold on the invocation.</div>
+              {% else %}
+                <div class="small text-muted mt-1">Approval authorises the invocation claim to be sent to the bank.</div>
+              {% endif %}
+            </div>
+          {% endif %}
+          {% if requested_by %}
+            <p class="small text-muted mb-3">Requested by {{ requested_by.full_name }} ({{ requested_by.email }}).</p>
+          {% endif %}
+
+          <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="token" value="{{ token }}">
+            <div class="d-grid gap-2">
+              <button type="submit" name="action" value="approve" class="btn btn-brand btn-lg">Approve</button>
+              <button type="submit" name="action" value="decline" class="btn btn-outline-danger">Decline</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}

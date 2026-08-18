@@ -1,0 +1,98 @@
+{% extends "emails/base.html" %}
+
+{% block preheader %}Request for confirmation of Bank Guarantee authenticity{% endblock %}
+
+{% block header_tag %}Bank Verification{% endblock %}
+
+{% block badge_area %}
+<div style="margin-bottom: 16px;">
+  <span style="display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; padding: 4px 10px; border-radius: 4px; background-color: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe;">
+    Verification Request
+  </span>
+</div>
+{% endblock %}
+
+{% block heading %}
+<h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #0f172a; line-height: 1.35;">
+  Bank Guarantee Authenticity Verification
+</h1>
+{% endblock %}
+
+{% block content %}
+<div style="font-size: 15px; line-height: 1.65; color: #334155; margin-bottom: 20px;">
+  <p style="margin: 0 0 12px 0;">
+    Dear Bank Officer / Trade Finance Operations Team,
+  </p>
+  <p style="margin: 0 0 12px 0;">
+    We have received a Bank Guarantee purporting to be issued by your institution. In accordance with standard corporate governance and audit requirements, we request your prompt confirmation that the guarantee referenced below is genuine, valid, and authentic.
+  </p>
+</div>
+{% endblock %}
+
+{% block details_table %}
+  {% if extra_lines or details %}
+  <div style="margin: 20px 0;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;">
+      {% if details and details is mapping %}
+        {% for label, val in details.items() %}
+          {% if val %}
+          <tr>
+            <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #64748b; border-bottom: 1px solid #e2e8f0; width: 38%; background-color: #f1f5f9;">
+              {{ label }}
+            </td>
+            <td style="padding: 10px 14px; font-size: 13px; font-weight: 700; color: #0f172a; border-bottom: 1px solid #e2e8f0; width: 62%;">
+              {{ val }}
+            </td>
+          </tr>
+          {% endif %}
+        {% endfor %}
+      {% elif extra_lines %}
+        {% for line in extra_lines %}
+          {% if ':' in line %}
+            {% set parts = line.split(':', 1) %}
+            <tr>
+              <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #64748b; border-bottom: 1px solid #e2e8f0; width: 38%; background-color: #f1f5f9;">
+                {{ parts[0] | trim }}
+              </td>
+              <td style="padding: 10px 14px; font-size: 13px; font-weight: 700; color: #0f172a; border-bottom: 1px solid #e2e8f0; width: 62%;">
+                {{ parts[1] | trim }}
+              </td>
+            </tr>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    </table>
+  </div>
+  {% endif %}
+{% endblock %}
+
+{% block action_button %}
+  {% set target_url = (action_url or link_url) | absolute_url if (action_url or link_url) else '' %}
+  {% if target_url %}
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 28px 0 20px 0;">
+    <tr>
+      <td align="center">
+        <table border="0" cellpadding="0" cellspacing="0" class="btn-table">
+          <tr>
+            <td align="center" style="border-radius: 6px; background-color: #2563eb;">
+              <a href="{{ target_url }}" target="_blank" class="btn-link" style="display: inline-block; padding: 14px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #2563eb; text-align: center;">
+                Confirm Authenticity Online &rarr;
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; margin-top: 16px; font-size: 12px; color: #64748b; line-height: 1.4; word-break: break-all;">
+    <strong>Direct link:</strong> <a href="{{ target_url }}" style="color: #2563eb; text-decoration: underline;">{{ target_url }}</a>
+  </div>
+  {% endif %}
+{% endblock %}
+
+{% block security_notice %}
+<div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; line-height: 1.5;">
+  Please complete verification via the secure link above. If this guarantee was not issued by your branch or contains discrepancies, you can mark it as disputed via the same link.
+</div>
+{% endblock %}

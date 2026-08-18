@@ -1,0 +1,112 @@
+{% include "components/_components_style.html" %}
+<div class="sidebar" id="appSidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Workspace</div>
+    <a class="sidebar-link {{ 'active' if active_nav == 'dashboard' }}" href="{{ url_for('dashboard.index') }}">
+      <i class="bi bi-grid-1x2"></i><span>Dashboard</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">My Tasks</div>
+    {% if current_user.active_role == 'creator' %}
+      <a class="sidebar-link {{ 'active' if active_nav == 'upload_bg' }}" href="{{ url_for('intake.upload_bg') }}">
+        <i class="bi bi-cloud-upload"></i><span>Upload BG</span>
+      </a>
+    {% endif %}
+    {% if current_user.active_role == 'coordinator' %}
+      <a class="sidebar-link {{ 'active' if active_nav == 'upload_extended' }}" href="{{ url_for('intake.upload_extended') }}">
+        <i class="bi bi-arrow-repeat"></i><span>Upload Extended BG</span>
+      </a>
+    {% endif %}
+    {% if current_user.active_role in ('creator', 'coordinator') %}
+      <a class="sidebar-link {{ 'active' if active_nav == 'drafts' }}" href="{{ url_for('documents.drafts') }}">
+        <i class="bi bi-files"></i><span>Saved Drafts</span>
+      </a>
+    {% endif %}
+    {% if current_user.active_role == 'creator' %}
+      <a class="sidebar-link {{ 'active' if active_nav == 'ceo_cfo_mail' }}" href="{{ url_for('approval.ceo_cfo_mail') }}">
+        <i class="bi bi-envelope-check"></i><span>CEO/CFO Mail Attachments</span>
+      </a>
+    {% endif %}
+    {% if current_user.active_role in ['buyer', 'tc_head', 'bu_fc', 'bu_cfmc', 'abex'] %}
+      <a class="sidebar-link {{ 'active' if active_nav == 'approval_queue' }}" href="{{ url_for('approval.queue') }}">
+        <i class="bi bi-inbox"></i><span>Approval Queue</span>
+      </a>
+    {% endif %}
+    {% if current_user.active_role not in ('creator', 'coordinator', 'buyer', 'tc_head', 'bu_fc', 'bu_cfmc', 'abex') %}
+      <p class="sidebar-empty-hint mb-0">Approvals and assignments will appear here in a later step.</p>
+    {% endif %}
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Lifecycle Hub</div>
+    {% if current_user.active_role == 'coordinator' %}
+      <a class="sidebar-link {{ 'active' if active_nav == 'extension' }}" href="{{ url_for('lifecycle.extension') }}">
+        <i class="bi bi-arrow-repeat"></i><span>BG Extensions</span>
+      </a>
+      <a class="sidebar-link {{ 'active' if active_nav == 'closure' }}" href="{{ url_for('lifecycle.closure') }}">
+        <i class="bi bi-box-arrow-in-down"></i><span>BG Closures</span>
+      </a>
+      <a class="sidebar-link {{ 'active' if active_nav == 'bg_return' }}" href="{{ url_for('lifecycle.bg_return') }}">
+        <i class="bi bi-arrow-left-circle"></i><span>BG Returns</span>
+      </a>
+    {% elif current_user.active_role == 'creator' %}
+      <a class="sidebar-link {{ 'active' if active_nav == 'bg_return' }}" href="{{ url_for('lifecycle.bg_return') }}">
+        <i class="bi bi-arrow-left-circle"></i><span>BG Returns</span>
+      </a>
+    {% elif current_user.active_role == 'tc_head' %}
+      <a class="sidebar-link {{ 'active' if active_nav == 'closure_review' }}" href="{{ url_for('lifecycle.closure_review') }}">
+        <i class="bi bi-folder-check"></i><span>Closure Review</span>
+      </a>
+      <a class="sidebar-link {{ 'active' if active_nav == 'invocation' }}" href="{{ url_for('invocation.index') }}">
+        <i class="bi bi-shield-exclamation"></i><span>BG Invocation</span>
+      </a>
+    {% elif current_user.active_role == 'bu_fc' %}
+      <a class="sidebar-link {{ 'active' if active_nav == 'invocation' }}" href="{{ url_for('invocation.index') }}">
+        <i class="bi bi-shield-exclamation"></i><span>BG Invocation</span>
+      </a>
+    {% else %}
+      <p class="sidebar-empty-hint mb-0">Extension, closure and return actions will appear here for the relevant roles.</p>
+    {% endif %}
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">BG Repository</div>
+    <a class="sidebar-link {{ 'active' if active_nav == 'generated' }}" href="{{ url_for('documents.generated') }}">
+      <i class="bi bi-file-earmark-pdf"></i><span>Generated Documents</span>
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Reporting &amp; Insights</div>
+    <a class="sidebar-link {{ 'active' if active_nav == 'status_hub' }}" href="{{ url_for('hub.status_hub') }}">
+      <i class="bi bi-grid"></i><span>BG Status Hub</span>
+    </a>
+    <a class="sidebar-link {{ 'active' if active_nav == 'bank_tracker' }}" href="{{ url_for('hub.bank_tracker') }}">
+      <i class="bi bi-building-check"></i><span>Bank Tracker</span>
+    </a>
+    <a class="sidebar-link {{ 'active' if active_nav == 'assistant' }}" href="{{ url_for('assistant.index') }}">
+      <i class="bi bi-robot"></i><span>Policy Q&amp;A Assistant</span>
+    </a>
+  </div>
+
+  {% if current_user.active_role == 'admin' %}
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Admin</div>
+      <a class="sidebar-link {{ 'active' if active_nav == 'admin' and request.endpoint and request.endpoint == 'admin.dashboard' }}" href="{{ url_for('admin.dashboard') }}">
+        <i class="bi bi-speedometer2"></i><span>Admin Dashboard</span>
+      </a>
+      <a class="sidebar-link {{ 'active' if active_nav == 'admin' and request.endpoint and request.endpoint.startswith('admin.users') }}" href="{{ url_for('admin.users') }}">
+        <i class="bi bi-people"></i><span>User &amp; Roles</span>
+      </a>
+      <a class="sidebar-link {{ 'active' if active_nav == 'admin' and request.endpoint and (request.endpoint.startswith('admin.config') or request.endpoint == 'admin.prohibited_overrides' or request.endpoint == 'admin.prohibited_override') }}" href="{{ url_for('admin.configuration') }}">
+        <i class="bi bi-gear"></i><span>Platform Configuration</span>
+      </a>
+      <a class="sidebar-link {{ 'active' if active_nav == 'admin' and request.endpoint and request.endpoint.startswith('admin.audit_log') }}" href="{{ url_for('admin.audit_log') }}">
+        <i class="bi bi-journal-text"></i><span>Audit Log</span>
+      </a>
+    </div>
+  {% endif %}
+</div>
+<div class="sidebar-backdrop" data-sidebar-backdrop></div>

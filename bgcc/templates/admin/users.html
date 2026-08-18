@@ -1,0 +1,172 @@
+{% extends "layouts/app.html" %}
+{% from "macros/status.html" import status_badge %}
+{% set active_nav = 'admin' %}
+{% block title %}User &amp; Role Management · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "admin/_admin_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="admin-shell">
+  <div class="admin-page-head d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <div>
+      <div class="admin-eyebrow"><i class="bi bi-people"></i> Access control</div>
+      <h1 class="admin-title">User &amp; Role Management</h1>
+      <p class="admin-subtitle">Approve registrations and manage roles and business-unit scope.</p>
+    </div>
+  </div>
+
+  <div class="admin-card mb-4">
+    <div class="admin-card-head"><i class="bi bi-hourglass-split"></i> Pending registrations</div>
+    <div class="admin-card-body flush">
+      {% if pending %}
+      {% for user in pending %}
+      <div class="admin-list-row">
+        <span class="admin-avatar">{{ user.full_name[:1] | upper }}</span>
+        <div class="admin-list-main">
+          <div class="cell-strong">{{ user.full_name }}</div>
+          <div class="admin-hint">{{ user.email }} · requested {{ user.created_at | datetime_display }}</div>
+          <div class="admin-hint">Requested roles:
+            {% for r in (user.granted_roles or []) %}<span class="admin-pill">{{ r | role_label }}</span>{% else %}<span
+              class="admin-hint">-</span>{% endfor %}
+          </div>
+        </div>
+        <form method="post" action="{{ url_for('admin.approve_user', user_id=user.id) }}"
+          class="d-flex gap-2 align-items-center flex-wrap">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <select name="sap_system_id" class="form-select form-select-sm" style="width:auto;border-radius:10px">
+            {% for s in sap_systems %}<option value="{{ s.id }}" {% if user.sap_system_id==s.id %}selected{% endif %}>{{
+              s.display_name }}</option>{% endfor %}
+          </select>
+          <div class="d-flex gap-1 flex-wrap">
+            {% for val, label in role_choices %}
+            <label class="form-check form-check-inline small" style="font-size:.82rem;color:var(--admin-body)">
+              <input class="form-check-input" type="checkbox" name="roles" value="{{ val }}" {% if val in
+                (user.granted_roles or []) %}checked{% endif %}>
+              <span class="form-check-label">{{ label }}</span>
+            </label>
+            {% endfor %}
+          </div>
+          <button class="admin-btn admin-btn-primary admin-btn-sm" type="submit"><i class="bi bi-check-lg"></i>
+            Approve</button>
+        </form>
+        <form method="post" action="{{ url_for('admin.reject_user', user_id=user.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="admin-btn admin-btn-danger admin-btn-sm" type="submit"><i class="bi bi-x-lg"></i>
+            Reject</button>
+        </form>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="admin-empty">
+        <span class="admin-empty-icon"><i class="bi bi-check2-circle"></i></span>
+        <div class="admin-empty-title">No pending registrations</div>
+        <p class="admin-empty-text">Every registration has been reviewed. New sign-ups will appear here for your
+          approval.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <form method="get" class="admin-filter mb-3">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label" for="q">Search</label>
+        <input name="q" id="q" value="{{ filters.q or '' }}" class="form-control form-control-sm"
+          placeholder="Name or email">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label" for="status">Status</label>
+        <select name="status" id="status" class="form-select form-select-sm">
+          <option value="">All</option>
+          <option value="active" {% if filters.status=='active' %}selected{% endif %}>Active</option>
+          <option value="inactive" {% if filters.status=='inactive' %}selected{% endif %}>Inactive</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label" for="approved">Approval</label>
+        <select name="approved" id="approved" class="form-select form-select-sm">
+          <option value="">All</option>
+          <option value="yes" {% if filters.approved=='yes' %}selected{% endif %}>Approved</option>
+          <option value="no" {% if filters.approved=='no' %}selected{% endif %}>Not approved</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label" for="role">Role</label>
+        <select name="role" id="role" class="form-select form-select-sm">
+          <option value="">All roles</option>
+          {% for val, label in role_choices %}<option value="{{ val }}" {% if filters.role==val %}selected{% endif %}>{{
+            label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label" for="business_unit">Business unit</label>
+        <select name="business_unit" id="business_unit" class="form-select form-select-sm">
+          <option value="">All</option>
+          {% for bu in business_units %}<option value="{{ bu }}" {% if filters.business_unit==bu %}selected{% endif %}>
+            {{ bu }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-1">
+        <button type="submit" class="admin-btn admin-btn-primary admin-btn-sm w-100"><i class="bi bi-funnel"></i>
+          Filter</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="admin-card">
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Roles</th>
+            <th>Business unit</th>
+            <th>Approval</th>
+            <th>Active</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in page.items %}
+          <tr>
+            <td class="cell-strong" data-label="Name">{{ user.full_name }}</td>
+            <td data-label="Email">{{ user.email }}</td>
+            <td data-label="Roles">{% for r in (user.granted_roles or []) %}<span class="admin-pill">{{ r | role_label
+                }}</span>{% else %}-{% endfor %}</td>
+            <td data-label="Business unit">{{ user.sap_system.display_name if user.sap_system else '-' }}</td>
+            <td data-label="Approval">
+              {% if user.is_approved %}<span class="admin-badge admin-badge-success"><i class="bi bi-check-circle"></i>
+                Yes</span>
+              {% else %}<span class="admin-badge admin-badge-warning"><i class="bi bi-clock"></i> No</span>{% endif %}
+            </td>
+            <td data-label="Active">
+              {% if user.is_active %}<span class="admin-badge admin-badge-success">Yes</span>
+              {% else %}<span class="admin-badge admin-badge-danger">No</span>{% endif %}
+            </td>
+            <td data-label="Action" class="text-end">
+              <a class="admin-btn admin-btn-ghost admin-btn-sm"
+                href="{{ url_for('admin.edit_user', user_id=user.id) }}"><i class="bi bi-pencil"></i> Edit</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="cell-muted">No users match your filters.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if page.pages > 1 %}
+  <nav class="admin-pagination" aria-label="Users pages">
+    {% for p in range(1, page.pages + 1) %}
+    <a class="admin-page-link {{ 'active' if p == page.page }}"
+      href="{{ url_for('admin.users', page=p, **filters) }}">{{ p }}</a>
+    {% endfor %}
+  </nav>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "layouts/app.html" %}
+{% from "macros/status.html" import status_badge %}
+{% set active_nav = 'bank_tracker' %}
+{% block title %}Bank Tracker · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "hub/_hub_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="hub-shell">
+  <div class="hub-page-head">
+    <div class="hub-eyebrow"><i class="bi bi-building-check"></i> Bank verification</div>
+    <h1 class="hub-title">Bank Tracker</h1>
+    <p class="hub-subtitle">Bank-side authenticity verification status per Bank Guarantee.</p>
+  </div>
+
+  <div class="hub-card">
+    <div class="hub-table-wrap">
+      <table class="hub-table">
+        <thead>
+          <tr><th>BG</th><th>Vendor</th><th>Issuing bank</th><th>Verification status</th><th>Sent</th><th>Confirmed</th><th class="text-end">Action</th></tr>
+        </thead>
+        <tbody>
+          {% for bg in bgs %}
+            {% set v = verif_map.get(bg.id) %}
+            <tr>
+              <td class="cell-strong" data-label="BG"><a href="{{ url_for('bg.detail', bg_id=bg.id) }}">{{ bg.bg_number }}</a></td>
+              <td data-label="Vendor">{{ bg.vendor_name or '-' }}</td>
+              <td data-label="Issuing bank">{{ bg.issuing_bank or '-' }}</td>
+              <td data-label="Verification status">
+                {% if v is none %}
+                  <span class="badge text-bg-light">Not sent</span>
+                {% elif v.status == 'confirmed' %}
+                  <span class="badge text-bg-success">Confirmed</span>
+                {% elif v.status == 'pending' %}
+                  <span class="badge text-bg-warning">Pending</span>
+                {% elif v.status == 'disputed' %}
+                  <span class="badge text-bg-danger">Disputed</span>
+                {% elif v.status == 'no_response' %}
+                  <span class="badge text-bg-dark">No response</span>
+                {% else %}
+                  <span class="badge text-bg-light">{{ v.status | title }}</span>
+                {% endif %}
+                {% if v and v.response_reference %}<div class="cell-muted small">{{ v.response_reference }}</div>{% endif %}
+              </td>
+              <td data-label="Sent">{{ v.sent_at | datetime_display if v and v.sent_at else '-' }}</td>
+              <td data-label="Confirmed">{{ v.confirmed_at | datetime_display if v and v.confirmed_at else '-' }}</td>
+              <td data-label="Action" class="text-end">
+                {% if current_user.active_role == 'coordinator' %}
+                  <div class="d-inline-flex gap-2">
+                    {% if v and v.status == 'no_response' %}
+                      <form method="post" action="{{ url_for('hub.bank_resend', bg_id=bg.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="hub-btn hub-btn-ghost hub-btn-sm" type="submit"><i class="bi bi-arrow-repeat"></i> Resend</button>
+                      </form>
+                    {% endif %}
+                    {% if v %}
+                      <form method="post" action="{{ url_for('hub.bank_override', bg_id=bg.id) }}" class="hub-inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="text" name="reference" class="form-control form-control-sm" placeholder="Reference note" required style="width:150px" aria-label="Reference note">
+                        <select name="status" class="form-select form-select-sm" style="width:auto" aria-label="Verification status">
+                          <option value="confirmed">Mark Confirmed</option>
+                          <option value="disputed">Mark Disputed</option>
+                        </select>
+                        <button class="hub-btn hub-btn-ghost hub-btn-sm" type="submit"><i class="bi bi-check-lg"></i> Apply</button>
+                      </form>
+                    {% endif %}
+                  </div>
+                {% endif %}
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="7" class="cell-muted">No Bank Guarantees to display.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

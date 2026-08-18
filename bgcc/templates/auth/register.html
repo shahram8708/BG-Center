@@ -1,0 +1,67 @@
+{% extends "layouts/auth.html" %}
+{% from "macros/forms.html" import floating_input, floating_select, labelled_field %}
+{% block title %}Request access · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "auth/_auth_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  {% if registered %}
+    <div class="card auth-card shadow">
+      <div class="text-center">
+        <span class="auth-success-icon"><i class="bi bi-check-lg"></i></span>
+        <div class="auth-eyebrow"><i class="bi bi-send-check"></i> Submitted</div>
+        <h1 class="card-title mb-2">Request received</h1>
+        <p class="card-sub mb-1">
+          Thank you, {{ form.full_name.data }}. Your access request has been submitted and is now
+          <strong>awaiting approval</strong> by the platform administrator.
+        </p>
+        <p class="card-sub mb-4">
+          You'll receive an email once your account is approved, after which you can sign in.
+        </p>
+        <a class="btn btn-outline-brand w-100" href="{{ url_for('auth.sign_in') }}">Back to sign in</a>
+      </div>
+    </div>
+  {% else %}
+    <div class="card auth-card shadow">
+      <div class="text-center">
+        <span class="auth-brand-mark small"><i class="bi bi-person-plus"></i></span>
+        <div class="auth-eyebrow"><i class="bi bi-person-plus"></i> New account</div>
+        <h1 class="card-title mb-1">Request access</h1>
+        <p class="card-sub mb-4">Your request will go to a platform administrator for approval</p>
+      </div>
+
+      <form method="post" novalidate data-submit-gate>
+        {{ form.hidden_tag() }}
+        {{ floating_input(form.full_name, type='text', autocomplete='name') }}
+        {{ floating_input(form.email, type='email', autocomplete='email') }}
+        {{ floating_select(form.sap_system_id) }}
+
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.roles.id }}">Requested role(s) <span class="required">*</span></label>
+          <div class="d-flex flex-wrap gap-2">
+            {% for value, label in form.roles.choices %}
+              <div class="form-check role-chip">
+                <input class="form-check-input" type="checkbox" name="{{ form.roles.name }}" id="role-{{ value }}" value="{{ value }}" {% if form.roles.data and value in form.roles.data %}checked{% endif %}>
+                <label class="form-check-label" for="role-{{ value }}">{{ label }}</label>
+              </div>
+            {% endfor %}
+          </div>
+          {% for e in form.roles.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+
+        {{ labelled_field(form.manager_email, required=False, help="Optional - helps the approver understand your request context.") }}
+        {{ floating_input(form.password, type='password', autocomplete='new-password', password_meter='pwm-register') }}
+        {{ floating_input(form.confirm, type='password', autocomplete='new-password') }}
+
+        <button type="submit" class="btn btn-brand w-100">Submit request</button>
+      </form>
+
+      <p class="text-center small auth-muted mt-3 mb-0">
+        Already have an account? <a href="{{ url_for('auth.sign_in') }}" class="fw-semibold text-decoration-none">Sign in</a>
+      </p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

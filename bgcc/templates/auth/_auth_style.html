@@ -1,0 +1,113 @@
+<style>
+/* BG Command Centre - Authentication design pass.
+   Scoped to .auth-shell so it only affects the auth pages. Matches the
+   project-wide refined identity (violet #7C3AED -> magenta #C026D3) used in the
+   redesigned Admin, Approval and Assistant folders. */
+.auth-shell {
+  --auth-primary: #7C3AED;
+  --auth-accent: #C026D3;
+  --auth-tint: #F5F3FF;
+  --auth-ink: #111827;
+  --auth-body: #374151;
+  --auth-muted: #6B7280;
+  --auth-border: #E5E7EB;
+  --auth-border-strong: #D1D5DB;
+  --auth-grad: linear-gradient(135deg, var(--auth-primary), var(--auth-accent));
+  --auth-radius: 18px;
+  --auth-radius-sm: 10px;
+  --auth-transition: .22s cubic-bezier(.4,0,.2,1);
+}
+.auth-shell { min-height: 100%; }
+
+/* ---- Centering wrap (composes with the shared .auth-wrap) ---- */
+.auth-shell .auth-wrap { padding: 3rem 1rem; }
+
+/* ---- Auth card ---- */
+.auth-shell .auth-card {
+  border: 1px solid var(--auth-border); border-radius: var(--auth-radius);
+  box-shadow: 0 2px 6px rgba(17,24,39,.05), 0 24px 60px rgba(124,58,237,.14);
+  padding: 2.2rem 2.2rem 1.8rem;
+}
+.auth-shell .auth-card .card-body { padding: 0; }
+
+/* ---- Brand mark + eyebrow ---- */
+.auth-shell .auth-eyebrow {
+  display: inline-flex; align-items: center; gap: .45rem;
+  font-size: .66rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--auth-primary); background: var(--auth-tint); border: 1px solid #E4DDFD;
+  padding: .28rem .7rem; border-radius: 999px; margin-bottom: .9rem;
+}
+.auth-shell .auth-brand-mark {
+  width: 58px; height: 58px; border-radius: 18px; margin: 0 auto 1.1rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--auth-grad); color: #fff; font-size: 1.7rem;
+  box-shadow: 0 8px 20px rgba(124,58,237,.35);
+}
+.auth-shell .auth-brand-mark.small { width: 48px; height: 48px; border-radius: 14px; font-size: 1.3rem; }
+.auth-shell .card-title { font-size: 1.35rem; font-weight: 800; color: var(--auth-ink); letter-spacing: -.01em; }
+.auth-shell .card-sub { font-size: .9rem; color: var(--auth-muted); }
+
+/* ---- Floating-label form fields (rendered by shared macros) ---- */
+.auth-shell .form-floating { margin-bottom: 1rem; }
+.auth-shell .form-floating > .form-control, .auth-shell .form-floating > .form-select {
+  border-radius: var(--auth-radius-sm); border: 1px solid var(--auth-border-strong);
+  background: #fff; color: var(--auth-ink); font-size: .94rem;
+  transition: border-color var(--auth-transition), box-shadow var(--auth-transition);
+}
+.auth-shell .form-floating > .form-control:focus, .auth-shell .form-floating > .form-select:focus {
+  border-color: var(--auth-primary); box-shadow: 0 0 0 .22rem rgba(124,58,237,.16);
+}
+.auth-shell .form-floating > label { color: var(--auth-muted); font-size: .88rem; }
+.auth-shell .form-floating > .form-control:focus ~ label, .auth-shell .form-floating > .form-control:not(:placeholder-shown) ~ label,
+.auth-shell .form-floating > .form-select ~ label { color: var(--auth-primary); }
+
+/* ---- Non-floating labelled fields ---- */
+.auth-shell .form-label { font-weight: 600; color: var(--auth-ink); font-size: .86rem; }
+.auth-shell .form-label .required, .auth-shell .form-label.required { color: var(--auth-danger, #DC2626); }
+.auth-shell .mb-3 > .form-control:not(.form-floating .form-control) {
+  border-radius: var(--auth-radius-sm); border: 1px solid var(--auth-border-strong);
+  padding: .6rem .85rem;
+}
+.auth-shell .mb-3 > .form-control:focus { border-color: var(--auth-primary); box-shadow: 0 0 0 .2rem rgba(124,58,237,.16); outline: none; }
+
+/* ---- Buttons ---- */
+.auth-shell .btn-brand { border-radius: var(--auth-radius-sm); padding: .68rem 1rem; font-weight: 600; }
+.auth-shell .btn-outline-brand { border-radius: var(--auth-radius-sm); padding: .68rem 1rem; font-weight: 600; }
+.auth-shell .btn-outline-brand:hover { background: var(--auth-tint); color: var(--auth-primary); }
+
+/* ---- Role select radio cards ---- */
+.auth-shell .role-option {
+  display: flex; align-items: center; gap: .7rem;
+  border: 1px solid var(--auth-border); border-radius: var(--auth-radius-sm);
+  padding: .9rem 1rem; cursor: pointer; transition: all var(--auth-transition);
+}
+.auth-shell .role-option:hover { border-color: var(--auth-primary); background: var(--auth-tint); }
+.auth-shell .role-option .form-check-input:checked { background-color: var(--auth-primary); border-color: var(--auth-primary); }
+
+/* ---- Requested-roles checkbox chips ---- */
+.auth-shell .role-chip { display: inline-flex; align-items: center; gap: .45rem; }
+.auth-shell .role-chip .form-check-input { margin-top: 0; }
+.auth-shell .role-chip .form-check-input:checked { background-color: var(--auth-primary); border-color: var(--auth-primary); }
+
+/* ---- Success / info states ---- */
+.auth-shell .auth-success-icon { width: 64px; height: 64px; border-radius: 18px; display: inline-flex; align-items: center; justify-content: center; background: #DCFCE7; color: #15803D; font-size: 1.6rem; margin-bottom: 1rem; }
+.auth-shell .auth-muted { color: var(--auth-muted); }
+
+/* ---- Password meter & real-time feedback ---- */
+.auth-shell .password-meter { display: block; margin-top: .6rem; }
+.auth-shell .password-meter-bars { display: flex; gap: 4px; margin-bottom: .4rem; }
+.auth-shell .password-meter span { height: 4px; flex: 1; border-radius: 2px; background: var(--auth-border); transition: background-color .2s ease; }
+.auth-shell .password-meter span.on { background: #16A34A; }
+.auth-shell .password-meter span.bar-weak { background: #DC2626; }
+.auth-shell .password-meter span.bar-medium { background: #D97706; }
+.auth-shell .password-meter span.bar-strong { background: #16A34A; }
+.auth-shell .password-rules-list { display: grid; grid-template-columns: 1fr 1fr; gap: .3rem .75rem; font-size: .78rem; margin-top: .4rem; }
+.auth-shell .password-rules-list .rule-item { display: flex; align-items: center; transition: color .15s ease; }
+.auth-shell .password-rules-list .rule-item.text-success { color: #15803D !important; }
+
+/* ---- Responsive ---- */
+@media (max-width: 575.98px) {
+  .auth-shell .auth-card { padding: 1.6rem 1.4rem 1.4rem; }
+  .auth-shell .card-title { font-size: 1.2rem; }
+}
+</style>

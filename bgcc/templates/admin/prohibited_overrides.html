@@ -1,0 +1,55 @@
+{% extends "layouts/app.html" %}
+{% from "macros/status.html" import tier_badge %}
+{% set active_nav = 'admin' %}
+{% block title %}Prohibited-Clause Overrides · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "admin/_admin_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="admin-shell">
+  <div class="admin-page-head">
+    <div class="admin-eyebrow"><i class="bi bi-shield-exclamation"></i> Risk governance</div>
+    <h1 class="admin-title">Prohibited-Clause Overrides</h1>
+    <p class="admin-subtitle">The only path past the hard block on Prohibited-tier deviations. Distinct from editing the master pattern list.</p>
+  </div>
+
+  <div class="admin-alert admin-alert-warn mb-4">
+    <i class="bi bi-info-circle me-1"></i> Granting an override here changes the outcome for one specific clause on one specific Bank Guarantee.
+    Editing the master prohibited-pattern list (Platform Configuration → Clause Compliance) changes what gets flagged for every future submission. These are separate, deliberate actions.
+  </div>
+
+  {% if deviations %}
+    {% for d in deviations %}
+      {% set bg = bg_map.get(d.bank_guarantee_id) %}
+      <div class="admin-card admin-card-hover mb-3">
+        <div class="admin-card-body">
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            <span class="cell-strong">{{ bg.bg_number if bg else 'BG #' ~ d.bank_guarantee_id }}</span>
+            <span class="admin-badge admin-badge-prohibited"><i class="bi bi-lock-fill"></i> Prohibited</span>
+            <span class="admin-pill">{{ d.clause_reference }}</span>
+            <span class="admin-badge admin-badge-light">{{ d.deviation_type | replace('_', ' ') | title }}</span>
+          </div>
+          <div class="admin-hint mb-2">{{ d.template_text_summary }}</div>
+          {% if d.bg_text_excerpt %}
+            <div class="admin-row mb-3"><code class="small">{{ d.bg_text_excerpt }}</code></div>
+          {% endif %}
+          <a class="admin-btn admin-btn-primary admin-btn-sm" href="{{ url_for('admin.prohibited_override', deviation_id=d.id) }}">
+            <i class="bi bi-shield-check"></i> Review &amp; grant override
+          </a>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="admin-card">
+      <div class="admin-card-body">
+        <div class="admin-empty">
+          <span class="admin-empty-icon"><i class="bi bi-shield-check"></i></span>
+          <div class="admin-empty-title">No overrides pending</div>
+          <p class="admin-empty-text">There are no Prohibited-tier deviations awaiting an administrator override.</p>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

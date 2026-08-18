@@ -1,0 +1,208 @@
+{% extends "layouts/app.html" %}
+{% from "macros/status.html" import status_badge, tier_badge %}
+{% set active_nav = 'invocation' %}
+{% block title %}BG Invocation · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "invocation/_invocation_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="inv-shell">
+  <div class="inv-page-head d-flex flex-wrap align-items-center justify-content-between gap-3">
+    <div>
+      <div class="inv-eyebrow"><i class="bi bi-broadcast"></i> Bank Guarantee invocation</div>
+      <h1 class="inv-title mb-1">BG Invocation</h1>
+      <p class="inv-subtitle mb-0">Manage claims on Bank Guarantees - draft, sign, and send with dual-gate control.</p>
+    </div>
+  </div>
+
+  {% macro dual_gate(inv, docs) %}
+    <div class="inv-gate">
+      {% if docs.signed %}
+        <span class="badge text-bg-success"><i class="bi bi-check-lg me-1"></i> Signed letter uploaded</span>
+        <a href="{{ url_for('documents.view', doc_id=docs.signed.id) }}" target="_blank" rel="noopener"><i class="bi bi-eye me-1"></i>view</a>
+      {% else %}
+        <span class="badge text-bg-light">Signed letter not yet uploaded</span>
+      {% endif %}
+      {% if inv.ceo_approved_at %}
+        <span class="badge text-bg-success"><i class="bi bi-check-lg me-1"></i> CEO approved</span>
+      {% else %}
+        <span class="badge text-bg-light">CEO approval pending</span>
+      {% endif %}
+      {% if inv.stage == 'on_hold' %}<span class="badge text-bg-warning"><i class="bi bi-pause-circle me-1"></i> On hold</span>{% endif %}
+    </div>
+  {% endmacro %}
+
+  <!-- Claim Window Monitor -->
+  <div class="inv-card">
+    <div class="inv-card-head"><i class="bi bi-clock-history"></i> Live Bank Guarantees & Claim Window Monitor <span class="inv-head-sub">{{ monitor|length }} guarantee(s)</span></div>
+    <div class="inv-card-body">
+      {% if monitor %}
+        {% for m in monitor %}
+          {% set bg = m.bg %}
+          {% set inv = m.inv %}
+          {% set win = m.window %}
+          {% if win.is_critical %}
+            <div class="inv-row inv-claim critical d-flex flex-wrap align-items-center justify-content-between gap-2">
+              <div class="flex-grow-1" style="min-width:240px">
+                <div class="inv-row-main d-flex align-items-center gap-2">
+                  <i class="bi bi-exclamation-triangle-fill" style="color:#DC2626"></i>
+                  <span>CRITICAL &middot; {{ bg.bg_number }}</span>
+                  <span class="badge text-bg-danger">Critical ({{ win.days_remaining }} day{{ 's' if win.days_remaining != 1 else '' }} left)</span>
+                </div>
+                <div class="inv-row-meta">{{ bg.vendor_name or 'vendor' }} &middot; {{ bg.amount }} {{ bg.currency }}</div>
+                <div class="inv-row-meta text-danger"><i class="bi bi-calendar-x me-1"></i>Claim window closes {{ win.claim_date }} (in {{ win.days_remaining }} day{{ 's' if win.days_remaining != 1 else '' }}).</div>
+              </div>
+              {% if role in ('bu_fc', 'admin') %}
+                <form method="post" action="{{ url_for('invocation.generate') }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="bg_id" value="{{ bg.id }}">
+                  <button class="btn btn-danger" type="submit"><i class="bi bi-file-earmark-pdf me-1"></i> Generate Draft</button>
+                </form>
+              {% endif %}
+            </div>
+          {% elif win.is_in_window %}
+            <div class="inv-row inv-claim standard d-flex flex-wrap align-items-center justify-content-between gap-2" style="border-left: 4px solid #F59E0B; background: #FFFBEB;">
+              <div class="flex-grow-1" style="min-width:240px">
+                <div class="inv-row-main d-flex align-items-center gap-2">
+                  <span>{{ bg.bg_number }}</span>
+                  <span class="badge text-bg-warning">Inside Claim Window</span>
+                </div>
+                <div class="inv-row-meta">{{ bg.vendor_name or 'vendor' }} &middot; {{ bg.amount }} {{ bg.currency }}</div>
+                <div class="inv-row-meta"><i class="bi bi-calendar-event me-1 text-warning"></i>Claim window closes {{ win.claim_date }} (in {{ win.days_remaining }} day{{ 's' if win.days_remaining != 1 else '' }}).</div>
+              </div>
+              {% if role in ('bu_fc', 'admin') %}
+                <form method="post" action="{{ url_for('invocation.generate') }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="bg_id" value="{{ bg.id }}">
+                  <button class="btn btn-brand" type="submit"><i class="bi bi-file-earmark-pdf me-1"></i> Generate Draft</button>
+                </form>
+              {% endif %}
+            </div>
+          {% else %}
+            <div class="inv-row inv-claim standard d-flex flex-wrap align-items-center justify-content-between gap-2">
+              <div class="flex-grow-1" style="min-width:240px">
+                <div class="inv-row-main d-flex align-items-center gap-2">
+                  <span>{{ bg.bg_number }}</span>
+                  <span class="badge text-bg-success">Live</span>
+                  {% if win.days_remaining > 0 %}
+                    <span class="badge text-bg-light border text-secondary"><i class="bi bi-clock me-1"></i>Outside claim window</span>
+                  {% else %}
+                    <span class="badge text-bg-secondary"><i class="bi bi-clock-history me-1"></i>Claim window closed</span>
+                  {% endif %}
+                </div>
+                <div class="inv-row-meta">{{ bg.vendor_name or 'vendor' }} &middot; {{ bg.amount }} {{ bg.currency }}</div>
+                {% if win.days_remaining > 0 %}
+                  <div class="inv-row-meta"><i class="bi bi-calendar-check me-1"></i>Claim window closes {{ win.claim_date }} (in {{ win.days_remaining }} days &middot; window opens in {{ win.days_until_window }} day{{ 's' if win.days_until_window != 1 else '' }}).</div>
+                {% else %}
+                  <div class="inv-row-meta"><i class="bi bi-calendar-x me-1"></i>Claim window closed on {{ win.claim_date }}.</div>
+                {% endif %}
+              </div>
+              <div>
+                <span class="badge bg-light text-muted border px-2 py-1"><i class="bi bi-lock me-1"></i>Draft available during claim window</span>
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <div class="inv-empty"><i class="bi bi-clock"></i>No Bank Guarantees available in your portfolio.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- In Progress -->
+  <div class="inv-card">
+    <div class="inv-card-head"><i class="bi bi-arrow-repeat"></i> In Progress <span class="inv-head-sub">{{ in_progress|length }} active</span></div>
+    <div class="inv-card-body">
+      {% if in_progress %}
+        {% for m in in_progress %}
+          {% set bg = m.bg %}
+          {% set inv = m.inv %}
+          {% set docs = doc_refs(inv) %}
+          <div class="inv-row">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+              <div class="inv-row-main">{{ bg.bg_number }}</div>
+              {{ status_badge(inv.stage) }}
+              <span class="inv-row-meta">{{ bg.vendor_name or 'vendor' }}</span>
+            </div>
+            {{ dual_gate(inv, docs) }}
+            <div class="inv-actions">
+              {% if docs.docx %}<a class="btn btn-sm btn-outline-brand" href="{{ url_for('documents.generated_view', gen_id=docs.docx.id) }}" target="_blank" rel="noopener"><i class="bi bi-file-earmark-word me-1"></i> Draft (DOCX)</a>{% endif %}
+              {% if docs.pdf %}<a class="btn btn-sm btn-outline-brand" href="{{ url_for('documents.generated_view', gen_id=docs.pdf.id) }}" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf me-1"></i> Draft (PDF)</a>{% endif %}
+
+              {% if role == 'bu_fc' %}
+                {% if inv.stage == 'draft_generated' and not docs.signed %}
+                  <form method="post" action="{{ url_for('invocation.generate') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="bg_id" value="{{ bg.id }}">
+                    <button class="btn btn-sm btn-outline-brand" type="submit"><i class="bi bi-arrow-clockwise me-1"></i> Regenerate Draft</button>
+                  </form>
+                {% endif %}
+                {% if not docs.signed %}
+                  <form method="post" action="{{ url_for('invocation.sign_upload') }}" enctype="multipart/form-data" class="inv-upload-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="bg_id" value="{{ bg.id }}">
+                    <input type="file" name="file" accept="application/pdf,.pdf" class="form-control form-control-sm" style="max-width:200px" required>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" name="signed_confirm" id="signed-{{ bg.id }}" required>
+                      <label class="form-check-label small" for="signed-{{ bg.id }}">I confirm this letter has been signed</label>
+                    </div>
+                    <button class="btn btn-sm btn-brand" type="submit"><i class="bi bi-upload me-1"></i> Upload Signed Letter</button>
+                  </form>
+                {% endif %}
+              {% endif %}
+
+              {% if role == 'tc_head' %}
+                {% if inv.stage != 'on_hold' and inv.sent_to_bank_at is none %}
+                  <form method="post" action="{{ url_for('invocation.hold') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="bg_id" value="{{ bg.id }}">
+                    <button class="btn btn-sm btn-outline-warning" type="submit"><i class="bi bi-pause-circle me-1"></i> Request Hold</button>
+                  </form>
+                {% endif %}
+                {% if inv.stage == 'on_hold' %}
+                  <span class="badge text-bg-warning"><i class="bi bi-pause-circle"></i> Hold confirmed (CFO {{ '✓' if inv.hold_cfo_approved_at else '…' }} / CEO {{ '✓' if inv.hold_ceo_approved_at else '…' }})</span>
+                  <form method="post" action="{{ url_for('invocation.release') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="bg_id" value="{{ bg.id }}">
+                    <button class="btn btn-sm btn-outline-success" type="submit"><i class="bi bi-play-circle me-1"></i> Release Hold</button>
+                  </form>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="inv-empty"><i class="bi bi-arrow-repeat"></i>No invocations in progress.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Completed -->
+  <div class="inv-card">
+    <div class="inv-card-head"><i class="bi bi-check2-circle"></i> Completed <span class="inv-head-sub">{{ completed|length }} sent</span></div>
+    <div class="inv-card-body">
+      {% if completed %}
+        {% for m in completed %}
+          {% set bg = m.bg %}
+          {% set inv = m.inv %}
+          {% set docs = doc_refs(inv) %}
+          <div class="inv-row d-flex flex-wrap align-items-center gap-2">
+            <div class="flex-grow-1" style="min-width:220px">
+              <div class="inv-row-main">{{ bg.bg_number }}</div>
+              <div class="inv-row-meta">Sent to bank {{ inv.sent_to_bank_at | datetime_display }}</div>
+              <div class="inv-row-meta">{{ 'Bank dispatch automatic' if bank_emails.get(bg.id) else 'Manual bank dispatch required' }}</div>
+            </div>
+            <div class="inv-actions">
+              {% if docs.pdf %}<a class="btn btn-sm btn-outline-brand" href="{{ url_for('documents.generated_view', gen_id=docs.pdf.id) }}" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf me-1"></i> Final letter</a>{% endif %}
+              {% if docs.signed %}<a class="btn btn-sm btn-outline-brand" href="{{ url_for('documents.view', doc_id=docs.signed.id) }}" target="_blank" rel="noopener"><i class="bi bi-check-lg me-1"></i> Signed copy</a>{% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="inv-empty"><i class="bi bi-check2-circle"></i>No completed invocations.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

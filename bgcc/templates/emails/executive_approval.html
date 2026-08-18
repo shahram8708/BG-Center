@@ -1,0 +1,105 @@
+{% extends "emails/base.html" %}
+
+{% block preheader %}{{ subject | default('Executive approval required for Bank Guarantee action') }}{% endblock %}
+
+{% block header_tag %}Executive Sign-off{% endblock %}
+
+{% block badge_area %}
+<div style="margin-bottom: 16px;">
+  <span style="display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; padding: 4px 10px; border-radius: 4px; background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a;">
+    Approval Required
+  </span>
+</div>
+{% endblock %}
+
+{% block heading %}
+<h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #0f172a; line-height: 1.35;">
+  {{ title | default('Executive Sign-off Required') }}
+</h1>
+{% endblock %}
+
+{% block content %}
+<div style="font-size: 15px; line-height: 1.65; color: #334155; margin-bottom: 20px;">
+  <p style="margin: 0 0 12px 0;">
+    An action requiring executive authorization has been submitted in <strong>BG Command Centre</strong>.
+  </p>
+  <p style="margin: 0 0 12px 0;">
+    Please review the summary details below. You can approve or decline this request directly using your secure, single-use approval link:
+  </p>
+</div>
+{% endblock %}
+
+{% block details_table %}
+  {% if extra_lines or details %}
+  <div style="margin: 20px 0;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;">
+      {% if details and details is mapping %}
+        {% for label, val in details.items() %}
+          {% if val %}
+          <tr>
+            <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #64748b; border-bottom: 1px solid #e2e8f0; width: 38%; background-color: #f1f5f9;">
+              {{ label }}
+            </td>
+            <td style="padding: 10px 14px; font-size: 13px; font-weight: 700; color: #0f172a; border-bottom: 1px solid #e2e8f0; width: 62%;">
+              {{ val }}
+            </td>
+          </tr>
+          {% endif %}
+        {% endfor %}
+      {% elif extra_lines %}
+        {% for line in extra_lines %}
+          {% if ':' in line %}
+            {% set parts = line.split(':', 1) %}
+            <tr>
+              <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #64748b; border-bottom: 1px solid #e2e8f0; width: 38%; background-color: #f1f5f9;">
+                {{ parts[0] | trim }}
+              </td>
+              <td style="padding: 10px 14px; font-size: 13px; font-weight: 700; color: #0f172a; border-bottom: 1px solid #e2e8f0; width: 62%;">
+                {{ parts[1] | trim }}
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="2" style="padding: 10px 14px; font-size: 13px; color: #334155; border-bottom: 1px solid #e2e8f0; background-color: #ffffff;">
+                {{ line }}
+              </td>
+            </tr>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    </table>
+  </div>
+  {% endif %}
+{% endblock %}
+
+{% block action_button %}
+  {% set target_url = (action_url or link_url) | absolute_url if (action_url or link_url) else '' %}
+  {% if target_url %}
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 28px 0 20px 0;">
+    <tr>
+      <td align="center">
+        <table border="0" cellpadding="0" cellspacing="0" class="btn-table">
+          <tr>
+            <td align="center" style="border-radius: 6px; background-color: #2563eb;">
+              <a href="{{ target_url }}" target="_blank" class="btn-link" style="display: inline-block; padding: 14px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #2563eb; text-align: center;">
+                {{ action_text | default('Review & Sign Off Request') }} &rarr;
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; margin-top: 16px; font-size: 12px; color: #64748b; line-height: 1.4; word-break: break-all;">
+    <strong>Direct link:</strong> If the button is not clickable in your email client:<br />
+    <a href="{{ target_url }}" style="color: #2563eb; text-decoration: underline;">{{ target_url }}</a>
+  </div>
+  {% endif %}
+{% endblock %}
+
+{% block security_notice %}
+<div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; line-height: 1.5;">
+  <strong>Security Advisory:</strong> This approval link is cryptographically signed and single-use. It expires automatically and serves as your digital approval signature. <em>Do not forward this email to others.</em>
+</div>
+{% endblock %}

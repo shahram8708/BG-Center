@@ -1,0 +1,61 @@
+{% extends "layouts/public.html" %}
+{% block title %}Privacy Policy · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "legal/_legal_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="lgl-shell row justify-content-center">
+  <div class="col-lg-9">
+    <div class="lgl-page-head">
+      <div class="lgl-eyebrow"><i class="bi bi-shield-lock"></i> Data protection</div>
+      <h1 class="lgl-title mb-1">Privacy Policy</h1>
+      <p class="lgl-subtitle">Last updated: August 2026</p>
+    </div>
+
+    <div class="lgl-card">
+      <div class="lgl-card-body">
+        <p class="lgl-body-text mb-3">
+          This policy describes how {{ app_name }} collects, uses and protects information.
+          This is an internal enterprise platform; access is restricted to authorised employees.
+        </p>
+
+        <h2 class="lgl-section">What we collect</h2>
+        <ul class="lgl-list">
+          <li><strong>Account information:</strong> your work email, full name, roles, business unit, and sign-in activity.</li>
+          <li><strong>Bank Guarantee data:</strong> documents and metadata you upload or create for legitimate business purposes.</li>
+          <li><strong>Usage logs:</strong> audit events recording who performed which action, and when, to support governance and security.</li>
+        </ul>
+
+        <h2 class="lgl-section">How we use it</h2>
+        <ul class="lgl-list">
+          <li>To operate the platform and manage the Bank Guarantee lifecycle.</li>
+          <li>To enforce role-based access and delegation-of-authority controls.</li>
+          <li>To provide AI-assisted analysis on documents you upload.</li>
+          <li>To send you legitimate notifications about the guarantees you work on.</li>
+        </ul>
+
+        <h2 class="lgl-section">Retention</h2>
+        <p class="lgl-body-text">
+          Records are retained for as long as they are needed for the legitimate business purposes
+          described above and to satisfy legal, regulatory and audit requirements. Access to sensitive
+          data is limited to personnel with a legitimate need.
+        </p>
+
+        <h2 class="lgl-section">Security</h2>
+        <p class="lgl-body-text">
+          We protect information with encryption in transit and at rest, hashed credentials, role-based
+          access control, and a complete audit trail of privileged actions. Passwords are never stored
+          in plain text.
+        </p>
+
+        <h2 class="lgl-section">Your responsibilities</h2>
+        <p class="lgl-body-text mb-0">
+          You must keep your credentials confidential, only upload documents for legitimate business
+          purposes, and not attempt to access information outside your authorised role.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends "layouts/app.html" %}
+{% from "macros/status.html" import status_badge %}
+{% set active_nav = 'status_hub' %}
+{% block title %}BG Status Hub · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "hub/_hub_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="hub-shell">
+  <div class="hub-page-head">
+    <div class="hub-eyebrow"><i class="bi bi-grid"></i> Company-wide view</div>
+    <h1 class="hub-title">BG Status Hub</h1>
+    <p class="hub-subtitle">Company-wide view of every Bank Guarantee and its status.</p>
+  </div>
+
+  <form method="get" class="hub-filter">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label" for="q">Search</label>
+        <input name="q" id="q" value="{{ filters.q or '' }}" class="form-control form-control-sm" placeholder="BG number or vendor">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="status">Status</label>
+        <select name="status" id="status" class="form-select form-select-sm">
+          <option value="">All statuses</option>
+          {% for val, label in status_choices %}<option value="{{ val }}" {% if filters.status == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label" for="bg_type">BG type</label>
+        <select name="bg_type" id="bg_type" class="form-select form-select-sm">
+          <option value="">All types</option>
+          {% for val, label in type_choices %}<option value="{{ val }}" {% if filters.bg_type == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label" for="expenditure">Expenditure</label>
+        <select name="expenditure" id="expenditure" class="form-select form-select-sm">
+          <option value="">All</option>
+          {% for val, label in expenditure_choices %}<option value="{{ val }}" {% if filters.expenditure == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label" for="business_unit">Business unit</label>
+        <select name="business_unit" id="business_unit" class="form-select form-select-sm">
+          <option value="">All</option>
+          {% for bu in business_units %}<option value="{{ bu }}" {% if filters.business_unit == bu %}selected{% endif %}>{{ bu }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="vendor">Vendor</label>
+        <input name="vendor" id="vendor" value="{{ filters.vendor or '' }}" class="form-control form-control-sm" placeholder="Vendor name">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label" for="date_from">Issue from</label>
+        <input name="date_from" id="date_from" type="date" value="{{ filters.date_from or '' }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label" for="date_to">Issue to</label>
+        <input name="date_to" id="date_to" type="date" value="{{ filters.date_to or '' }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="hub-btn hub-btn-primary hub-btn-sm"><i class="bi bi-funnel"></i> Filter</button>
+        <a class="hub-btn hub-btn-ghost hub-btn-sm" href="{{ url_for('hub.status_hub') }}">Clear</a>
+      </div>
+    </div>
+    <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+      <div class="input-group input-group-sm" style="max-width:280px">
+        <input id="viewName" type="text" class="form-control" placeholder="View name" aria-label="View name">
+        <button type="button" class="hub-btn hub-btn-ghost" data-save-status-view><i class="bi bi-bookmark-plus"></i> Save view</button>
+      </div>
+      <div class="d-flex gap-1 flex-wrap">
+        {% for sv in saved_views %}<a class="hub-btn hub-btn-light hub-btn-sm" href="{{ url_for('hub.status_hub', view=sv.id) }}">{{ sv.name }}</a>{% endfor %}
+      </div>
+    </div>
+  </form>
+
+  {% if page.items %}
+    <div class="hub-card">
+      <div class="hub-table-wrap">
+        <table class="hub-table">
+          <thead>
+            <tr><th>BG</th><th>Vendor</th><th>Amount</th><th>Type</th><th>Expenditure</th><th>Status</th><th>Updated</th><th class="text-end">Action</th></tr>
+          </thead>
+          <tbody>
+            {% for bg in page.items %}
+              <tr>
+                <td class="cell-strong" data-label="BG">{{ bg.bg_number }}</td>
+                <td data-label="Vendor">{{ bg.vendor_name or '-' }}</td>
+                <td data-label="Amount">{{ bg.amount }} {{ bg.currency }}</td>
+                <td data-label="Type">{{ bg.bg_type | replace('_', ' ') | upper }}</td>
+                <td data-label="Expenditure">{{ bg.expenditure_type | title }}</td>
+                <td data-label="Status">{{ status_badge(bg.status) }}</td>
+                <td data-label="Updated">{{ bg.updated_at | datetime_display }}</td>
+                <td data-label="Action" class="text-end">
+                  <a class="hub-btn hub-btn-ghost hub-btn-sm" href="{{ url_for('bg.detail', bg_id=bg.id) }}"><i class="bi bi-eye"></i> View</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% if page.pages > 1 %}
+      <nav class="hub-pagination" aria-label="Status pages">
+        {% for p in range(1, page.pages + 1) %}
+          <a class="hub-page-link {{ 'active' if p == page.page }}" href="{{ url_for('hub.status_hub', page=p, **filters) }}">{{ p }}</a>
+        {% endfor %}
+      </nav>
+    {% endif %}
+  {% else %}
+    <div class="hub-card">
+      <div class="hub-card-body p-0">
+        <div class="hub-empty">
+          <span class="hub-empty-icon"><i class="bi bi-grid"></i></span>
+          <div class="hub-empty-title">No Bank Guarantees match your filters</div>
+          <p class="hub-empty-text">Try adjusting or clearing the filters to see more records.</p>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/hub.js"></script>
+{% endblock %}

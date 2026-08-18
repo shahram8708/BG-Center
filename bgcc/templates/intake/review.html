@@ -1,0 +1,268 @@
+{% extends "layouts/app.html" %}
+{% from "macros/status.html" import tier_badge, conf_badge, result_badge %}
+{% set active_nav = 'upload_extended' if is_extension else 'upload_bg' %}
+{% block title %}Review validation · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "intake/_intake_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="in-shell">
+  <div class="in-page-head d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <div>
+      <div class="in-eyebrow"><i class="bi bi-clipboard-check"></i> Validation results</div>
+      <h1 class="in-title mb-0">Review validation results</h1>
+      <p class="in-subtitle mt-1">{{ bg.bg_number }}{% if is_extension %} · extension of a live parent BG{% endif %}</p>
+    </div>
+    {% if document_id %}
+      <div class="in-head-actions">
+        <a class="in-btn in-btn-ghost" href="{{ url_for('documents.view', doc_id=document_id) }}" target="_blank" rel="noopener">
+          <i class="bi bi-file-earmark-pdf"></i> Open source document
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="in-stepper">
+    <div class="in-step"><span class="in-step-dot done">1</span><span class="in-step-label">Details</span></div>
+    <span class="in-step-connector"></span>
+    <div class="in-step"><span class="in-step-dot done">2</span><span class="in-step-label">Validation</span></div>
+    <span class="in-step-connector"></span>
+    <div class="in-step"><span class="in-step-dot active">3</span><span class="in-step-label active">Review</span></div>
+    <span class="in-step-connector"></span>
+    <div class="in-step"><span class="in-step-dot">4</span><span class="in-step-label">Dispatch</span></div>
+  </div>
+
+  <form method="post" data-review-form>
+    {{ form.hidden_tag() }}
+
+    <div class="in-card">
+      <div class="in-card-head"><i class="bi bi-card-text"></i> Extracted fields
+        <span class="in-head-sub">Fields are AI-extracted; edit or confirm any that look wrong.</span></div>
+      <div class="in-card-body">
+        {% set conf = (analysis.extracted_fields or {}).get('field_confidences', {}) %}
+        <div class="row g-3">
+          {% set flds = [
+            ('bg_number', 'BG number', 'text'),
+            ('amount', 'Amount', 'text'),
+            ('issue_date', 'Issue date', 'date'),
+            ('expiry_date', 'Expiry date', 'date'),
+            ('claim_expiry_date', 'Claim expiry date', 'date'),
+            ('issuing_bank', 'Issuing bank', 'text'),
+            ('vendor_name', 'Vendor / beneficiary', 'text')
+          ] %}
+          {% for fname, label, ftype in flds %}
+            {% set field = form[fname] %}
+            {% set c = conf.get(fname, {}) %}
+            <div class="col-md-6 in-field">
+              <div class="mb-3">
+                <label for="{{ field.id }}">
+                  {{ label }}
+                  {% if c %}<span class="ai-tag ms-1">AI-extracted</span> {{ conf_badge(c.get('confidence')) }}{% endif %}
+                </label>
+                {% if ftype == 'date' %}
+                  {{ field(class_='form-control' + (' is-invalid' if field.errors else ''), type='date', data_confirm_for=fname) }}
+                {% else %}
+                  {{ field(class_='form-control' + (' is-invalid' if field.errors else ''), data_confirm_for=fname) }}
+                {% endif %}
+                {% if c and c.get('note') %}<div class="form-text small text-warning">{{ c.get('note') }}</div>{% endif %}
+                {% for e in field.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+                <input type="checkbox" class="d-none" name="confirmed_field" value="{{ fname }}" data-confirm="{{ fname }}">
+              </div>
+            </div>
+          {% endfor %}
+          <div class="col-md-6 in-field">
+            <div class="mb-3">
+              <label for="{{ form.currency.id }}">Currency</label>
+              {{ form.currency(class_='form-select' + (' is-invalid' if form.currency.errors else ''), data_confirm_for='currency') }}
+              {% for e in form.currency.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              <input type="checkbox" class="d-none" name="confirmed_field" value="currency" data-confirm="currency">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="in-card">
+      <div class="in-card-head"><i class="bi bi-clipboard-check"></i> PO &amp; SAP financial cross-check</div>
+      <div class="in-card-body">
+        {% if shortfall and shortfall.get('blocked') %}
+          <div class="alert alert-danger">
+            <div class="fw-bold"><i class="bi bi-exclamation-octagon me-1"></i> Advance shortfall - this cannot be submitted as-is</div>
+            <div class="small">The BG amount is below the currently open advance of {{ shortfall.get('total_open') }} on the referenced purchase order(s). This is a hard, non-overridable guardrail.</div>
+          </div>
+        {% endif %}
+        {% if po_context %}
+          <div class="small in-muted mb-3">Financial context retrieved for {{ po_context | length }} PO(s): vendor <strong>{{ po_context[0].get('vendor_name') }}</strong>.</div>
+        {% endif %}
+        {% set checks = (po_result or {}).get('checks', []) %}
+        {% for chk in checks %}
+          <div class="d-flex flex-wrap align-items-start gap-2 py-2 border-bottom">
+            <span class="fw-semibold text-capitalize" style="min-width:170px">{{ chk.check | replace('_', ' ') }}</span>
+            <div class="flex-grow-1">
+              <span class="me-2">{{ result_badge(chk.status) }}</span>
+              <span class="small text-body">{{ chk.detail }}</span>
+              {% if chk.explanation %}<div class="small in-muted mt-1">{{ chk.explanation }}</div>{% endif %}
+            </div>
+          </div>
+        {% endfor %}
+        {% if not checks %}<div class="in-muted small">No cross-check results available.</div>{% endif %}
+      </div>
+    </div>
+
+    <div class="in-card">
+      <div class="in-card-head"><i class="bi bi-layers"></i>
+        {% if is_extension %}Clause comparison vs parent guarantee{% else %}Clause compliance vs approved template{% endif %}
+        <span class="in-head-sub">Read-only - deviation decisions are made at approval.</span>
+      </div>
+      <div class="in-card-body">
+        {% set deviating = deviations | selectattr('is_missing_critical_clause', 'equalto', false) | list %}
+        {% if deviating %}
+          <div class="accordion" id="deviationAccordion">
+            {% for d in deviating %}
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="devH{{ d.id }}">
+                  <button class="accordion-button {{ '' if loop.first else 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#devC{{ d.id }}" aria-expanded="{{ 'true' if loop.first else 'false' }}" aria-controls="devC{{ d.id }}">
+                    <span class="d-flex align-items-center gap-2 flex-wrap">
+                      <span class="fw-semibold">{{ d.clause_reference }}</span>
+                      {{ tier_badge(d.effective_tier) }}
+                      <span class="badge text-bg-light">{{ d.deviation_type | replace('_', ' ') | title }}</span>
+                      {% if d.ai_proposed_tier != d.effective_tier %}<span class="badge text-bg-secondary">AI proposed {{ d.ai_proposed_tier | title }}</span>{% endif %}
+                    </span>
+                  </button>
+                </h2>
+                <div id="devC{{ d.id }}" class="accordion-collapse collapse {{ 'show' if loop.first }}" aria-labelledby="devH{{ d.id }}" data-bs-parent="#deviationAccordion">
+                  <div class="accordion-body small">
+                    {% if d.template_text_summary %}<div class="mb-2"><strong>Template / parent:</strong> {{ d.template_text_summary }}</div>{% endif %}
+                    {% if d.bg_text_excerpt %}<div class="mb-2"><strong>Document:</strong> <span class="in-muted">{{ d.bg_text_excerpt }}</span></div>{% endif %}
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="in-muted small">No clause deviations detected. <span class="text-success"><i class="bi bi-check-circle"></i></span></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="in-card">
+      <div class="in-card-head"><i class="bi bi-exclamation-triangle"></i> Missing critical clauses
+        <span class="in-head-sub">Acknowledge each item to enable submission.</span>
+      </div>
+      <div class="in-card-body">
+        {% set missing = deviations | selectattr('is_missing_critical_clause', 'equalto', true) | list %}
+        {% if missing %}
+          {% for d in missing %}
+            <div class="form-check py-1">
+              <input class="form-check-input ack-clause" type="checkbox" name="acknowledgements" value="{{ d.id }}" id="ack-{{ d.id }}" style="margin-top:.18em">
+              <label class="form-check-label" for="ack-{{ d.id }}">
+                <span class="fw-semibold">{{ d.clause_reference }}</span>
+                <span class="small in-muted">- {{ d.template_text_summary }}</span>
+              </label>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-success small"><i class="bi bi-check-circle"></i> All required clauses are present.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="in-card">
+      <div class="in-card-head"><i class="bi bi-list-check"></i> Format &amp; physical checklist
+        <span class="in-head-sub">
+          Dispatch readiness:
+          {% set dr = (analysis.dispatch_readiness | default('pending')) %}
+          {% if dr == 'ready' %}<span class="badge text-bg-success">Ready</span>
+          {% elif dr == 'needs_followup' %}<span class="badge text-bg-warning">Needs follow-up</span>
+          {% else %}<span class="badge text-bg-secondary">{{ dr | title }}</span>{% endif %}
+        </span>
+      </div>
+      <div class="in-card-body">
+        {% if checklist %}
+          {% for item in checklist %}
+            <div class="d-flex align-items-start gap-2 py-1 border-bottom">
+              <span>{{ result_badge('pass' if item.passed else 'fail') }}</span>
+              <div class="flex-grow-1">
+                <span class="fw-semibold small">{{ item.label }}</span>
+                {% if item.mandatory %}<span class="badge text-bg-light ms-1">mandatory</span>{% endif %}
+                <div class="small in-muted">{{ item.reason }}</div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="in-muted small">No checklist results available.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="in-card">
+      <div class="in-card-head"><i class="bi bi-truck"></i> Step 4 - Physical dispatch</div>
+      <div class="in-card-body">
+        <div class="row g-3">
+          <div class="col-md-6 in-field">
+            <label for="{{ form.dispatch_mode.id }}">{{ form.dispatch_mode.label.text }} <span class="req">*</span></label>
+            {{ form.dispatch_mode(class_='form-select' + (' is-invalid' if form.dispatch_mode.errors else '')) }}
+            {% for e in form.dispatch_mode.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+          </div>
+        </div>
+
+        <div data-dispatch-courier style="display:none">
+          <div class="row g-3 mt-1">
+            <div class="col-md-6 in-field">
+              <label for="{{ form.courier_name.id }}">{{ form.courier_name.label.text }}</label>
+              {{ form.courier_name(class_='form-control') }}
+            </div>
+            <div class="col-md-6 in-field">
+              <label for="{{ form.tracking_number.id }}">{{ form.tracking_number.label.text }}</label>
+              {{ form.tracking_number(class_='form-control') }}
+            </div>
+          </div>
+        </div>
+
+        <div data-dispatch-cmr style="display:none">
+          <div class="row g-3 mt-1">
+            <div class="col-md-4 in-field">
+              <label for="{{ form.cmr_deliverer_name.id }}">{{ form.cmr_deliverer_name.label.text }}</label>
+              {{ form.cmr_deliverer_name(class_='form-control') }}
+            </div>
+            <div class="col-md-4 in-field">
+              <label for="{{ form.cmr_deliverer_email.id }}">{{ form.cmr_deliverer_email.label.text }}</label>
+              {{ form.cmr_deliverer_email(class_='form-control') }}
+            </div>
+            <div class="col-md-4 in-field">
+              <label for="{{ form.cmr_deliverer_mobile.id }}">{{ form.cmr_deliverer_mobile.label.text }}</label>
+              {{ form.cmr_deliverer_mobile(class_='form-control') }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-light border small mb-4">
+      <i class="bi bi-info-circle me-1"></i> {{ disclaimer }}
+    </div>
+
+    <div class="in-actionbar">
+      <button type="button" class="in-btn in-btn-danger" data-discard-draft><i class="bi bi-trash"></i> Discard draft</button>
+      <div class="in-actions">
+        <button type="submit" class="in-btn in-btn-ghost" data-action-save><i class="bi bi-save"></i> Save as Draft</button>
+        <button type="submit" class="in-btn in-btn-primary" data-action-submit disabled><i class="bi bi-check-lg"></i> Submit for Approval</button>
+      </div>
+    </div>
+  </form>
+
+  <form method="post" action="{{ url_for('intake.discard_extended' if is_extension else 'intake.discard_bg', bg_id=bg.id) }}" data-discard-form class="d-none">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/intake.js"></script>
+<script>
+  initReviewForm({
+    saveUrl: "{{ url_for('intake.save_extended_draft' if is_extension else 'intake.save_bg_draft', bg_id=bg.id) }}",
+    submitUrl: "{{ url_for('intake.submit_extended' if is_extension else 'intake.submit_bg', bg_id=bg.id) }}"
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "layouts/app.html" %}
+{% from "macros/status.html" import tier_badge %}
+{% set active_nav = 'drafts' %}
+{% block title %}Saved Drafts · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "documents/_documents_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="doc-shell">
+  <div class="doc-page-head d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <div>
+      <div class="doc-eyebrow"><i class="bi bi-files"></i> Workspace</div>
+      <h1 class="doc-title">Saved Drafts</h1>
+      <p class="doc-subtitle">Resume a validated upload without re-running AI validation.</p>
+    </div>
+    <div class="doc-head-actions">
+      <a class="doc-btn doc-btn-primary" href="{{ url_for('intake.upload_bg' if current_user.active_role == 'creator' else 'intake.upload_extended') }}">
+        <i class="bi bi-plus-lg"></i> New upload
+      </a>
+    </div>
+  </div>
+
+  {% if drafts %}
+    <div class="row g-3">
+      {% for d in drafts %}
+        {% set bg = d.bg %}
+        <div class="col-md-6 col-xl-4">
+          <div class="doc-card doc-card-hover h-100">
+            <div class="doc-draft">
+              <div class="doc-draft-head">
+                <div>
+                  <div class="doc-draft-name">{{ bg.bg_number }}</div>
+                  <div class="doc-draft-vendor">{{ d.fields.get('vendor_name') or bg.vendor_name or 'Vendor not set' }}</div>
+                </div>
+                <span class="doc-badge">{{ bg.bg_type | replace('_', ' ') | upper }}</span>
+              </div>
+              <div class="doc-draft-meta">
+                Amount: <strong>{{ d.fields.get('amount') or bg.amount }} {{ d.fields.get('currency') or bg.currency }}</strong>
+              </div>
+              <div class="doc-draft-meta">Updated {{ bg.updated_at | datetime_display }}</div>
+
+              {% if d.deviations %}
+                <div class="mt-2 mb-3">
+                  <div class="doc-section-label">Validation summary</div>
+                  <div class="d-flex gap-1 flex-wrap">
+                    {% for tier in (['prohibited', 'high', 'low']) %}
+                      {% if d.deviations | selectattr('effective_tier', 'equalto', tier) | list %}
+                        {{ tier_badge(tier) }}
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endif %}
+
+              <div class="doc-draft-actions">
+                <a class="doc-btn doc-btn-primary doc-btn-sm" href="{{ url_for('intake.upload_extended_review' if d.is_extension else 'intake.upload_bg_review', bg_id=bg.id) }}">
+                  <i class="bi bi-arrow-repeat"></i> Resume
+                </a>
+                <button type="button" class="doc-btn doc-btn-danger doc-btn-sm" data-confirm-discard data-discard-url="{{ url_for('documents.discard', bg_id=bg.id) }}">
+                  <i class="bi bi-trash"></i> Discard
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="doc-card">
+      <div class="doc-card-body p-0">
+        <div class="doc-empty">
+          <span class="doc-empty-icon"><i class="bi bi-files"></i></span>
+          <div class="doc-empty-title">No saved drafts yet</div>
+          <p class="doc-empty-text">
+            When you save a validated upload as a draft, it will appear here so you can resume it
+            without re-running AI validation.
+          </p>
+          <div class="doc-empty-action">
+            <a class="doc-btn doc-btn-primary" href="{{ url_for('intake.upload_bg' if current_user.active_role == 'creator' else 'intake.upload_extended') }}">
+              Start a new upload
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/intake.js"></script>
+<script>initDraftsPage();</script>
+{% endblock %}

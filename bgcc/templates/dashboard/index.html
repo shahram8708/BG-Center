@@ -1,0 +1,106 @@
+{% extends "layouts/app.html" %}
+{% set active_nav = 'dashboard' %}
+{% block title %}Dashboard · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "dashboard/_dashboard_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="db-shell">
+  <div class="db-page-head">
+    <div class="db-eyebrow"><i class="bi bi-grid-1x2"></i> Portfolio overview</div>
+    <h1 class="db-title">Welcome back, {{ current_user.full_name }}</h1>
+    <p class="db-subtitle">Portfolio analytics for
+      <span class="db-role"><i class="bi bi-person-badge"></i>{{ current_user.active_role | role_label }}</span>
+      {% if not current_user.active_role == 'admin' and current_user.sap_system %}· {{ current_user.sap_system.display_name }}{% endif %}
+    </p>
+  </div>
+
+  {% if aggregates is none %}
+    <div class="db-card">
+      <div class="db-card-body">
+        <div class="db-empty">
+          <span class="db-empty-icon"><i class="bi bi-graph-up-arrow"></i></span>
+          <div class="db-empty-title">Your portfolio summary is being prepared</div>
+          <p class="db-empty-text">The analytics are refreshed hourly. Check back shortly to see your portfolio.</p>
+        </div>
+      </div>
+    </div>
+  {% elif not aggregates.has_data %}
+    <div class="db-card">
+      <div class="db-card-body">
+        <div class="db-empty">
+          <span class="db-empty-icon"><i class="bi bi-folder2-open"></i></span>
+          <div class="db-empty-title">No active guarantees yet</div>
+          <p class="db-empty-text">Your portfolio will appear here as Bank Guarantees are submitted, approved, and become Live.</p>
+          <div class="db-empty-action">
+            <a class="db-btn db-btn-primary" href="{{ url_for('intake.upload_bg' if current_user.active_role == 'creator' else 'hub.status_hub') }}">
+              {{ 'Start a new upload' if current_user.active_role == 'creator' else 'View the BG Status Hub' }}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="db-kpis">
+      <div class="db-kpi">
+        <span class="db-kpi-icon"><i class="bi bi-cash-stack"></i></span>
+        <div>
+          <div class="db-kpi-label">Total active BG value</div>
+          <div class="db-kpi-value">{{ "%.2f"|format(aggregates.total_active_value) }}</div>
+          <div class="db-kpi-hint">{{ aggregates.active_count }} live guarantee(s)</div>
+        </div>
+      </div>
+      <div class="db-kpi">
+        <span class="db-kpi-icon alt"><i class="bi bi-patch-check"></i></span>
+        <div>
+          <div class="db-kpi-label">Bank-confirmed value</div>
+          <div class="db-kpi-value">{{ "%.2f"|format(aggregates.bank_confirmed_value) }}</div>
+          <div class="db-kpi-hint">verified by the issuing bank</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="db-card">
+      <div class="db-card-head">
+        <i class="bi bi-bar-chart"></i> Portfolio distribution
+        <div class="btn-group ms-auto btn-group-sm db-toggle" role="group" aria-label="Toggle value or count">
+          <button type="button" class="btn btn-brand active" data-chart-metric="value">Value</button>
+          <button type="button" class="btn btn-outline-brand" data-chart-metric="count">Count</button>
+        </div>
+      </div>
+      <div class="db-card-body">
+        <div class="row g-4">
+          <div class="col-lg-4">
+            <div class="db-chart-title">By issuing bank</div>
+            <div class="db-chart-wrap"><canvas id="chartBank"></canvas></div>
+          </div>
+          <div class="col-lg-4">
+            <div class="db-chart-title">By vendor</div>
+            <div class="db-chart-wrap"><canvas id="chartVendor"></canvas></div>
+          </div>
+          <div class="col-lg-4">
+            <div class="db-chart-title">By business unit</div>
+            <div class="db-chart-wrap"><canvas id="chartBU"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="db-card">
+      <div class="db-card-head"><i class="bi bi-pie-chart"></i> Portfolio mix by BG type</div>
+      <div class="db-card-body">
+        <div class="mx-auto" style="max-width:420px"><div class="db-chart-wrap" style="height:260px"><canvas id="chartMix"></canvas></div></div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="/static/js/dashboard.js"></script>
+<script>
+  window.__dashboard = {{ (aggregates|tojson) if aggregates is not none else 'null' }};
+  if (window.__dashboard) initDashboard(window.__dashboard);
+</script>
+{% endblock %}

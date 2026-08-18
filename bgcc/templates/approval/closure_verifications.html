@@ -1,0 +1,65 @@
+{% extends "layouts/app.html" %}
+{% from "macros/status.html" import status_badge %}
+{% set active_nav = 'approval_queue' %}
+{% block title %}Closure Verifications · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "approval/_approval_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="apv-shell">
+  <div class="apv-page-head d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <div>
+      <div class="apv-eyebrow"><i class="bi bi-box-arrow-in-right"></i> ABEX review</div>
+      <h1 class="apv-title">Closure Verifications</h1>
+      <p class="apv-subtitle">Verify and close Bank Guarantees awaiting your ABEX action.</p>
+    </div>
+    <div class="apv-head-actions">
+      <a class="apv-btn apv-btn-ghost" href="{{ url_for('approval.queue') }}"><i class="bi bi-inbox"></i> Approval Queue</a>
+    </div>
+  </div>
+
+  {% if closures %}
+    <div class="apv-card">
+      <div class="apv-table-wrap">
+        <table class="apv-table">
+          <thead>
+            <tr><th>BG</th><th>Vendor</th><th>Type</th><th>Eligibility</th><th>Requested by</th><th class="text-end">Action</th></tr>
+          </thead>
+          <tbody>
+            {% for cl in closures %}
+              {% set bg = bg_map.get(cl.bank_guarantee_id) %}
+              <tr>
+                <td class="cell-strong" data-label="BG">{{ bg.bg_number if bg else '-' }}</td>
+                <td data-label="Vendor">{{ bg.vendor_name if bg else '-' }}</td>
+                <td data-label="Type">
+                  {% if cl.is_exception %}<span class="apv-badge apv-badge-warning"><i class="bi bi-exclamation-triangle"></i> Exception</span>
+                  {% else %}<span class="apv-badge apv-badge-success"><i class="bi bi-check-circle"></i> Standard</span>{% endif %}
+                </td>
+                <td class="cell-muted" data-label="Eligibility">{{ cl.eligibility_reasoning }}</td>
+                <td data-label="Requested by">{{ cl.initiated_by or '-' }}</td>
+                <td data-label="Action" class="text-end">
+                  <form method="post" action="{{ url_for('approval.closure_verify', closure_id=cl.id) }}" onsubmit="return confirm('Verify and close this Bank Guarantee?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="apv-btn apv-btn-primary apv-btn-sm"><i class="bi bi-check-lg"></i> Verify &amp; Close</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <div class="apv-card">
+      <div class="apv-card-body">
+        <div class="apv-empty">
+          <span class="apv-empty-icon"><i class="bi bi-check2-circle"></i></span>
+          <div class="apv-empty-title">No closures waiting on your verification</div>
+          <p class="apv-empty-text">Closures routed to ABEX verification will appear here.</p>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+<style>
+/* BG Command Centre - Layouts (shared shell) design pass.
+   Scoped to the app / auth / public shell wrappers so it refines the whole
+   application toward the project identity (violet #7C3AED -> magenta #C026D3).
+   Layered after the global app.css but before any page-specific stylesheet, so
+   per-folder shells can still override where needed. */
+:root {
+  --ly-primary: #7C3AED;
+  --ly-accent: #C026D3;
+  --ly-tint: #F5F3FF;
+  --ly-ink: #111827;
+  --ly-body: #374151;
+  --ly-muted: #6B7280;
+  --ly-border: #E5E7EB;
+}
+
+/* ---- Global, additive polish ---- */
+html { scroll-behavior: smooth; }
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  letter-spacing: .01em;
+}
+::selection { background: rgba(124, 58, 237, .18); }
+:focus-visible { outline: 2px solid var(--ly-primary); outline-offset: 2px; }
+
+/* ---- App shell ---- */
+.app-shell {
+  min-height: 100vh; display: flex; flex-direction: column;
+  background: #F8F7FC;
+}
+.app-shell .app-body { flex: 1 1 auto; }
+.app-shell .main-content { position: relative; }
+.app-shell .main-content::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--ly-primary), var(--ly-accent));
+  opacity: .92; border-radius: 0 0 3px 3px; pointer-events: none;
+}
+.app-shell .main-content .page-title { letter-spacing: -.01em; }
+.app-shell .alert {
+  border-radius: 12px; border: 1px solid var(--ly-border);
+  box-shadow: 0 1px 2px rgba(17, 24, 39, .05);
+}
+
+/* ---- Auth shell ---- */
+.auth-shell .auth-wrap {
+  background:
+    radial-gradient(1000px 420px at 90% -10%, rgba(192, 38, 211, .12), transparent 60%),
+    radial-gradient(900px 420px at 0% 110%, rgba(124, 58, 237, .16), transparent 60%),
+    #F8F7FC;
+}
+.auth-shell .auth-card {
+  border-radius: 20px; border: 1px solid var(--ly-border);
+  box-shadow: 0 24px 60px rgba(17, 24, 39, .14), 0 4px 14px rgba(124, 58, 237, .08);
+}
+
+/* ---- Public shell ---- */
+.public-shell {
+  min-height: 100vh; display: flex; flex-direction: column; background: #F8F7FC;
+}
+.public-shell .container { max-width: 960px; }
+.public-shell .page-title { letter-spacing: -.01em; }
+.public-shell .alert {
+  border-radius: 12px; border: 1px solid var(--ly-border);
+  box-shadow: 0 1px 2px rgba(17, 24, 39, .05);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 767.98px) {
+  .app-shell .main-content::before { height: 2px; }
+}
+</style>

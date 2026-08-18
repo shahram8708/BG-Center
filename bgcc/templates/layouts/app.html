@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "components/flashes.html" import render_flashes with context %}
+{% block head %}
+{{ super() }}
+{% include "layouts/_layouts_style.html" %}
+{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "components/navbar_app.html" %}
+  <div class="app-body">
+    {% include "components/sidebar_app.html" %}
+    <main class="main-content">
+      {{ render_flashes() }}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  {% include "components/footer_slim.html" %}
+  {% include "components/notifications_modal.html" %}
+  {% include "components/assistant_widget.html" %}
+</div>
+{% endblock %}
+{% block scripts %}{% endblock %}

@@ -1,0 +1,188 @@
+{% from "macros/status.html" import tier_badge, conf_badge, result_badge %}
+
+{% macro extracted_fields_readonly(fields) -%}
+  <div class="row g-3">
+    {% set conf = (fields or {}).get('field_confidences', {}) %}
+    {% set items = [
+      ('bg_number', 'BG number'),
+      ('amount', 'Amount'),
+      ('currency', 'Currency'),
+      ('issue_date', 'Issue date'),
+      ('expiry_date', 'Expiry date'),
+      ('claim_expiry_date', 'Claim expiry date'),
+      ('issuing_bank', 'Issuing bank'),
+      ('vendor_name', 'Vendor / beneficiary')
+    ] %}
+    {% for key, label in items %}
+      <div class="col-md-6">
+        <div class="small text-muted">{{ label }}
+          {% set c = conf.get(key, {}) %}
+          {% if c %}<span class="ai-tag ms-1"><i class="bi bi-stars me-1"></i>AI-extracted</span> {{ conf_badge(c.get('confidence')) }}{% endif %}
+        </div>
+        <div class="fw-semibold text-dark">{{ fields.get(key) or '-' }}</div>
+        {% if c and c.get('note') %}<div class="small text-warning"><i class="bi bi-exclamation-triangle me-1"></i>{{ c.get('note') }}</div>{% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{%- endmacro %}
+
+{% macro po_cross_check(po_result, shortfall=None) -%}
+  {% if shortfall and shortfall.get('blocked') %}
+    <div class="alert alert-danger">
+      <div class="fw-bold"><i class="bi bi-exclamation-octagon me-1"></i> Advance shortfall - blocked</div>
+      <div class="small">The BG amount is below the open advance of {{ shortfall.get('total_open') }}. This is a hard, non-overridable guardrail.</div>
+    </div>
+  {% endif %}
+  {% set po_context = (po_result or {}).get('po_context', []) %}
+  {% if po_context %}
+    <div class="small text-muted mb-3">Financial context for {{ po_context | length }} PO(s): vendor <strong>{{ po_context[0].get('vendor_name') }}</strong>.</div>
+  {% endif %}
+  {% set checks = (po_result or {}).get('checks', []) %}
+  {% for chk in checks %}
+    <div class="d-flex flex-wrap align-items-start gap-2 py-2 border-bottom">
+      <span class="fw-semibold text-capitalize" style="min-width:170px">{{ chk.check | replace('_', ' ') }}</span>
+      <div class="flex-grow-1">
+        <span class="me-2">{{ result_badge(chk.status) }}</span>
+        <span class="small text-body">{{ chk.detail }}</span>
+        {% if chk.explanation %}<div class="small text-muted mt-1"><i class="bi bi-info-circle me-1"></i>{{ chk.explanation }}</div>{% endif %}
+      </div>
+    </div>
+  {% else %}
+    <div class="text-muted small">No cross-check results available.</div>
+  {% endfor %}
+{%- endmacro %}
+
+{% macro format_checklist(checklist, dispatch_readiness=None) -%}
+  {% if dispatch_readiness %}
+    <div class="small text-muted mb-2">Dispatch readiness:
+      {% if dispatch_readiness == 'ready' %}<span class="badge text-bg-success"><i class="bi bi-check-circle me-1"></i>Ready</span>
+      {% elif dispatch_readiness == 'needs_followup' %}<span class="badge text-bg-warning"><i class="bi bi-exclamation-triangle me-1"></i>Needs follow-up</span>
+      {% else %}<span class="badge text-bg-secondary">{{ dispatch_readiness | title }}</span>{% endif %}
+    </div>
+  {% endif %}
+  {% if checklist %}
+    {% for item in checklist %}
+      <div class="d-flex align-items-start gap-2 py-1 border-bottom">
+        <span>{{ result_badge('pass' if item.passed else 'fail') }}</span>
+        <div class="flex-grow-1">
+          <span class="fw-semibold small">{{ item.label }}</span>
+          {% if item.mandatory %}<span class="badge text-bg-light ms-1"><i class="bi bi-asterisk me-1"></i>mandatory</span>{% endif %}
+          <div class="small text-muted">{{ item.reason }}</div>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="text-muted small">No checklist results available.</div>
+  {% endif %}
+{%- endmacro %}
+
+{% macro prior_decisions(prior_events, history) -%}
+  {% for h in history %}
+    <div class="py-2 border-bottom">
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <span class="badge text-bg-light"><i class="bi bi-clock-history me-1"></i>{{ h.action | replace('_', ' ') | title }}</span>
+        <span class="fw-semibold small">{{ h.actor_role | role_label if h.actor_role else 'System' }}</span>
+        <span class="small text-muted">{{ h.created_at | datetime_display }}</span>
+      </div>
+      {% if h.from_stage or h.to_stage %}
+        <div class="small text-muted">
+          {% if h.from_stage %}{{ h.from_stage | replace('_', ' ') | title }}{% endif %}
+          → {% if h.to_stage %}{{ h.to_stage | replace('_', ' ') | title }}{% endif %}
+        </div>
+      {% endif %}
+      {% if h.comments %}<div class="small mt-1">{{ h.comments }}</div>{% endif %}
+    </div>
+  {% endfor %}
+  {% for ev in prior_events %}
+    <div class="py-2 border-bottom">
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        {% if ev.event_type == 'deviation_decision' %}
+          <span class="badge text-bg-secondary">Deviation decision</span>
+        {% else %}
+          <span class="badge text-bg-secondary">Tier change</span>
+        {% endif %}
+        <span class="small text-muted">{{ ev.created_at | datetime_display }}</span>
+      </div>
+      <div class="small">
+        {{ ev.metadata_json.get('clause_reference') or ev.metadata_json.get('deviation_id') }}
+        {% if ev.event_type == 'deviation_decision' %}
+          → <span class="fw-semibold">{{ ev.metadata_json.get('decision', '') }}</span>
+        {% else %}
+          → {{ ev.metadata_json.get('effective_tier', '') | title }} (selected {{ ev.metadata_json.get('selected_tier', '') }})
+        {% endif %}
+        {% if ev.metadata_json.get('comment') %}<div class="text-muted">{{ ev.metadata_json.get('comment') }}</div>{% endif %}
+      </div>
+    </div>
+  {% else %}
+    {% if not history %}<div class="text-muted small">No prior decisions recorded.</div>{% endif %}
+  {% endfor %}
+{%- endmacro %}
+
+{% macro deviation_card(d, is_tc, rules, form_prefix='') -%}
+  <div class="border rounded p-3 mb-3" data-deviation="{{ d.id }}">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+      <span class="fw-semibold"><i class="bi bi-journal-check me-1" style="color:var(--brand-primary)"></i>{{ d.clause_reference }}</span>
+      {% if d.effective_tier == 'prohibited' and d.admin_override_by %}
+        <span class="badge text-bg-danger"><i class="bi bi-shield-exclamation me-1"></i>Prohibited - Admin Override Granted</span>
+      {% else %}
+        {{ tier_badge(d.effective_tier) }}
+      {% endif %}
+      <span class="badge text-bg-light">{{ d.deviation_type | replace('_', ' ') | title }}</span>
+      {% if d.is_missing_critical_clause %}<span class="badge text-bg-dark">Missing critical clause</span>{% endif %}
+      {% if d.ai_proposed_tier and d.ai_proposed_tier != d.effective_tier %}
+        <span class="badge text-bg-secondary"><i class="bi bi-stars me-1"></i>AI proposed {{ d.ai_proposed_tier | title }}</span>
+      {% endif %}
+    </div>
+    {% if d.template_text_summary %}<div class="small mb-1"><strong>Reference:</strong> {{ d.template_text_summary }}</div>{% endif %}
+    {% if d.bg_text_excerpt %}<div class="small text-muted mb-2">{{ d.bg_text_excerpt }}</div>{% endif %}
+
+    {% if is_tc %}
+      <div class="row g-2 align-items-center mt-1">
+        <div class="col-md-6">
+          <label class="small fw-semibold" for="tier-{{ d.id }}">Adjust risk tier</label>
+          <select class="form-select form-select-sm" name="{{ form_prefix }}tier_{{ d.id }}" data-tier-select="{{ d.id }}">
+            <option value="low" {% if d.effective_tier == 'low' %}selected{% endif %}>Low</option>
+            <option value="high" {% if d.effective_tier == 'high' %}selected{% endif %}>High</option>
+            <option value="prohibited" {% if d.effective_tier == 'prohibited' %}selected{% endif %}>Prohibited</option>
+          </select>
+        </div>
+        <div class="col-md-6 small text-muted">The deterministic prohibited-pattern check still applies: a matched pattern keeps the tier Prohibited regardless of this selection.</div>
+      </div>
+    {% endif %}
+
+    {% if d.effective_tier == 'prohibited' and d.admin_override_by %}
+      <div class="alert alert-warning py-2 px-3 small mb-2 mt-2">
+        <i class="bi bi-shield-check me-1"></i> <strong>Admin override granted.</strong> This clause remains Prohibited but no longer blocks approval.
+        Override by admin on {{ d.admin_override_at | datetime_display }} - {{ d.admin_override_reason }}
+      </div>
+    {% elif d.effective_tier == 'prohibited' %}
+      <div class="alert alert-danger py-2 px-3 small mb-2 mt-2">
+        <i class="bi bi-lock-fill me-1"></i> This prohibited-tier deviation cannot be accepted by any approver. Only a platform administrator can clear this block.
+      </div>
+    {% endif %}
+
+    {% if not (d.effective_tier == 'prohibited' and d.admin_override_by) %}
+    <div class="row g-2 align-items-end mt-1">
+      <div class="col-md-4">
+        <label class="small fw-semibold" for="decision-{{ d.id }}">Decision</label>
+        <select class="form-select form-select-sm" name="{{ form_prefix }}decision_{{ d.id }}" data-decision-select="{{ d.id }}" {% if d.effective_tier == 'prohibited' %}data-prohibited="1"{% endif %}>
+          <option value="">Select…</option>
+          {% if d.effective_tier != 'prohibited' %}<option value="accepted">Accept</option>{% endif %}
+          <option value="rejected">Reject</option>
+        </select>
+      </div>
+      <div class="col-md-8">
+        <label class="small fw-semibold" for="comment-{{ d.id }}">Comment <span class="text-muted">(required on Reject)</span></label>
+        <input class="form-control form-control-sm" name="{{ form_prefix }}comment_{{ d.id }}" data-decision-comment="{{ d.id }}">
+      </div>
+    </div>
+    {% endif %}
+
+    {% if d.is_missing_critical_clause %}
+      <div class="form-check mt-2">
+        <input class="form-check-input ack-clause" type="checkbox" name="{{ form_prefix }}ack_{{ d.id }}" id="ack-{{ d.id }}">
+        <label class="form-check-label small" for="ack-{{ d.id }}">Acknowledge this missing critical clause</label>
+      </div>
+    {% endif %}
+  </div>
+{%- endmacro %}

@@ -1,0 +1,116 @@
+<style>
+/* BG Command Centre - BG Detail & Timeline design pass.
+   Scoped to .bg-shell so it only affects pages in this folder. Matches the
+   project-wide refined identity (violet #7C3AED -> magenta #C026D3) used in the
+   already-redesigned Admin, Approval, Assistant and Auth folders. */
+.bg-shell {
+  --bg-primary: #7C3AED;
+  --bg-accent: #C026D3;
+  --bg-tint: #F5F3FF;
+  --bg-ink: #111827;
+  --bg-body: #374151;
+  --bg-muted: #6B7280;
+  --bg-border: #E5E7EB;
+  --bg-border-strong: #D1D5DB;
+  --bg-grad: linear-gradient(135deg, var(--bg-primary), var(--bg-accent));
+  --bg-radius: 16px;
+  --bg-radius-sm: 10px;
+  --bg-shadow: 0 1px 2px rgba(17,24,39,.05), 0 10px 28px rgba(124,58,237,.08);
+  --bg-shadow-hover: 0 12px 32px rgba(124,58,237,.18);
+  --bg-transition: .22s cubic-bezier(.4,0,.2,1);
+}
+.bg-shell { color: var(--bg-body); }
+
+/* ---- Page header ---- */
+.bg-page-head { margin-bottom: 1.4rem; }
+.bg-eyebrow {
+  display: inline-flex; align-items: center; gap: .45rem;
+  font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--bg-primary); background: var(--bg-tint); border: 1px solid #E4DDFD;
+  padding: .28rem .7rem; border-radius: 999px; margin-bottom: .6rem;
+}
+.bg-title { font-size: 1.6rem; font-weight: 800; color: var(--bg-ink); letter-spacing: -.02em; margin-bottom: .2rem; }
+.bg-subtitle { font-size: .92rem; color: var(--bg-muted); margin-bottom: 0; }
+.bg-head-actions { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+
+/* ---- Buttons ---- */
+.bg-btn {
+  display: inline-flex; align-items: center; gap: .45rem; border-radius: var(--bg-radius-sm);
+  font-weight: 600; padding: .5rem 1rem; font-size: .88rem; border: 1px solid transparent;
+  transition: all var(--bg-transition); text-decoration: none; cursor: pointer;
+}
+.bg-btn-primary { background: var(--bg-grad); color: #fff; box-shadow: 0 4px 14px rgba(124,58,237,.35); }
+.bg-btn-primary:hover { color: #fff; filter: brightness(1.06); box-shadow: 0 6px 20px rgba(124,58,237,.45); transform: translateY(-1px); }
+.bg-btn-primary:active { transform: translateY(0); }
+.bg-btn-ghost { background: #fff; border-color: var(--bg-border-strong); color: var(--bg-body); }
+.bg-btn-ghost:hover { border-color: var(--bg-primary); color: var(--bg-primary); background: var(--bg-tint); }
+.bg-btn-sm { padding: .34rem .68rem; font-size: .8rem; }
+.bg-btn:focus-visible { outline: 2px solid var(--bg-primary); outline-offset: 2px; }
+
+/* ---- Cards ---- */
+.bg-card {
+  background: var(--bg-surface, #fff); border: 1px solid var(--bg-border);
+  border-radius: var(--bg-radius); box-shadow: var(--bg-shadow); overflow: hidden;
+  margin-bottom: 1rem;
+}
+.bg-card-head {
+  display: flex; align-items: center; gap: .6rem; padding: .95rem 1.2rem;
+  border-bottom: 1px solid var(--bg-border); font-weight: 700; color: var(--bg-ink); font-size: .95rem;
+}
+.bg-card-head i { color: var(--bg-primary); font-size: 1.05rem; }
+.bg-card-head .bg-head-sub { margin-left: auto; font-size: .8rem; font-weight: 500; color: var(--bg-muted); }
+.bg-card-body { padding: 1.2rem; }
+.bg-card-body.compact { padding: .5rem .6rem; }
+
+/* ---- Key facts bar ---- */
+.bg-facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.2rem; }
+.bg-fact { background: var(--bg-surface, #fff); border: 1px solid var(--bg-border); border-radius: var(--bg-radius-sm); padding: .8rem 1rem; box-shadow: 0 1px 3px rgba(17,24,39,.04); }
+.bg-fact-label { font-size: .72rem; color: var(--bg-muted); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.bg-fact-value { font-size: .98rem; color: var(--bg-ink); font-weight: 700; margin-top: .15rem; }
+
+/* ---- Detail / read-only field pairs (macro output) ---- */
+.bg-shell .text-muted { color: var(--bg-muted) !important; }
+.bg-shell .fw-semibold.text-dark { color: var(--bg-ink) !important; }
+
+/* ---- Timeline ---- */
+.bg-timeline { position: relative; padding-left: 1.4rem; }
+.bg-timeline::before { content: ""; position: absolute; left: 6px; top: 6px; bottom: 6px; width: 2px; background: linear-gradient(var(--bg-primary), var(--bg-accent)); opacity: .25; border-radius: 2px; }
+.bg-timeline-item { position: relative; padding: .35rem 0 .9rem; }
+.bg-timeline-item::before { content: ""; position: absolute; left: -1.4rem; top: .7rem; width: 12px; height: 12px; border-radius: 50%; background: var(--bg-primary); border: 2px solid #fff; box-shadow: 0 0 0 2px var(--bg-primary); }
+.bg-timeline-item + .bg-timeline-item { border-top: 1px solid var(--bg-border); padding-top: .9rem; }
+.bg-timeline-badge { display: inline-flex; align-items: center; gap: .3rem; background: var(--bg-tint); color: var(--bg-primary); border-radius: 999px; padding: .18rem .6rem; font-size: .72rem; font-weight: 700; }
+.bg-timeline-role { font-size: .84rem; font-weight: 700; color: var(--bg-ink); }
+.bg-timeline-time { font-size: .76rem; color: var(--bg-muted); }
+.bg-timeline-stage { font-size: .8rem; color: var(--bg-muted); }
+.bg-timeline-comment { font-size: .84rem; color: var(--bg-body); margin-top: .2rem; }
+
+/* ---- File rows ---- */
+.bg-file-row { display: flex; align-items: center; gap: .6rem; padding: .55rem 0; }
+.bg-file-row + .bg-file-row { border-top: 1px solid var(--bg-border); }
+.bg-file-row .bg-file-name { flex: 1 1 auto; min-width: 0; font-size: .86rem; }
+.bg-file-icon { font-size: 1.05rem; color: var(--bg-danger, #DC2626); }
+.bg-file-icon.alt { color: var(--bg-primary); }
+
+/* ---- Deviation rows ---- */
+.bg-dev-row { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .6rem 0; }
+.bg-dev-row + .bg-dev-row { border-top: 1px solid var(--bg-border); }
+.bg-dev-summary { font-size: .82rem; color: var(--bg-muted); margin-left: auto; }
+.bg-shell .tier-badge, .bg-shell .tier-low, .bg-shell .tier-high, .bg-shell .tier-prohibited { border-radius: 999px; padding: .22rem .62rem; font-size: .74rem; font-weight: 700; }
+.bg-shell .tier-low { background: #DCFCE7; color: #15803D; }
+.bg-shell .tier-high { background: #FEF3C7; color: #B45309; }
+.bg-shell .tier-prohibited { background: #FEE2E2; color: #B91C1C; }
+.bg-shell .badge { font-weight: 600; }
+
+/* ---- Empty / muted ---- */
+.bg-empty { font-size: .86rem; color: var(--bg-muted); }
+
+/* ---- Responsive ---- */
+@media (max-width: 991.98px) {
+  .bg-facts { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 575.98px) {
+  .bg-title { font-size: 1.3rem; }
+  .bg-facts { grid-template-columns: 1fr; }
+  .bg-dev-summary { margin-left: 0; width: 100%; }
+}
+</style>

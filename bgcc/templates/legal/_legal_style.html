@@ -1,0 +1,83 @@
+<style>
+/* BG Command Centre - Legal / Public pages design pass.
+   Scoped to .lgl-shell so it only affects legal pages. Matches the project-wide
+   refined identity (violet #7C3AED -> magenta #C026D3) used across folders. */
+.lgl-shell {
+  --lgl-primary: #7C3AED;
+  --lgl-accent: #C026D3;
+  --lgl-tint: #F5F3FF;
+  --lgl-ink: #111827;
+  --lgl-body: #374151;
+  --lgl-muted: #6B7280;
+  --lgl-border: #E5E7EB;
+  --lgl-border-strong: #D1D5DB;
+  --lgl-grad: linear-gradient(135deg, var(--lgl-primary), var(--lgl-accent));
+  --lgl-radius: 16px;
+  --lgl-radius-sm: 10px;
+  --lgl-shadow: 0 1px 2px rgba(17,24,39,.05), 0 10px 28px rgba(124,58,237,.08);
+  --lgl-transition: .22s cubic-bezier(.4,0,.2,1);
+  color: var(--lgl-body);
+}
+
+.lgl-page-head { margin-bottom: 1.6rem; }
+.lgl-eyebrow {
+  display: inline-flex; align-items: center; gap: .45rem;
+  font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--lgl-primary); background: var(--lgl-tint); border: 1px solid #E4DDFD;
+  padding: .28rem .7rem; border-radius: 999px; margin-bottom: .6rem;
+}
+.lgl-title { font-size: 1.7rem; font-weight: 800; color: var(--lgl-ink); letter-spacing: -.02em; margin-bottom: .2rem; }
+.lgl-subtitle { font-size: .95rem; color: var(--lgl-muted); margin-bottom: 0; }
+
+.lgl-card {
+  background: #fff; border: 1px solid var(--lgl-border); border-radius: var(--lgl-radius);
+  box-shadow: var(--lgl-shadow); overflow: hidden; margin-bottom: 1.25rem;
+}
+.lgl-card .lgl-card-body { padding: 1.6rem 1.75rem; }
+
+/* Featured note (disclaimer) */
+.lgl-note {
+  display: flex; gap: 1rem; background: var(--lgl-tint);
+  border: 1px solid #E4DDFD; border-left: 5px solid var(--lgl-primary);
+  border-radius: var(--lgl-radius); padding: 1.3rem 1.5rem; margin-bottom: 1.25rem;
+  box-shadow: var(--lgl-shadow);
+}
+.lgl-note > i { font-size: 1.9rem; color: var(--lgl-primary); flex-shrink: 0; margin-top: .15rem; }
+
+/* Section headings for articles (privacy/terms) */
+.lgl-section { font-size: .95rem; font-weight: 800; color: var(--lgl-ink); margin: 1.6rem 0 .5rem; letter-spacing: -.01em; }
+.lgl-section:first-child { margin-top: 0; }
+.lgl-section::after {
+  content: ""; display: block; width: 44px; height: 3px; margin-top: .4rem;
+  background: var(--lgl-grad); border-radius: 999px;
+}
+.lgl-body-text { font-size: .92rem; color: var(--lgl-body); line-height: 1.65; }
+.lgl-list { font-size: .9rem; color: var(--lgl-body); padding-left: 0; list-style: none; margin-bottom: 0; }
+.lgl-list li { padding-left: 1.35rem; position: relative; margin-bottom: .45rem; line-height: 1.6; }
+.lgl-list li::before {
+  content: "\F26A"; font-family: "bootstrap-icons"; position: absolute; left: 0; top: .12rem;
+  color: var(--lgl-primary); font-size: .85rem;
+}
+
+/* Lifecycle stage cards (about) */
+.lgl-stage {
+  height: 100%; background: #fff; border: 1px solid var(--lgl-border); border-radius: var(--lgl-radius);
+  box-shadow: var(--lgl-shadow); padding: 1.15rem 1.25rem; display: flex; gap: .9rem;
+  transition: all var(--lgl-transition);
+}
+.lgl-stage:hover { box-shadow: 0 12px 32px rgba(124,58,237,.15); transform: translateY(-2px); border-color: #D8CCFB; }
+.lgl-stage-icon {
+  width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0; font-size: 1.25rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--lgl-tint); color: var(--lgl-primary);
+}
+.lgl-stage-title { font-weight: 700; color: var(--lgl-ink); font-size: .95rem; }
+.lgl-stage-text { font-size: .84rem; color: var(--lgl-muted); line-height: 1.5; }
+
+@media (max-width: 767.98px) {
+  .lgl-title { font-size: 1.4rem; }
+  .lgl-page-head { margin-bottom: 1.2rem; }
+  .lgl-card .lgl-card-body { padding: 1.3rem 1.2rem; }
+  .lgl-note { flex-direction: column; gap: .5rem; }
+}
+</style>

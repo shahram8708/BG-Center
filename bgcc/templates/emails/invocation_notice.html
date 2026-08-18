@@ -1,0 +1,113 @@
+{% extends "emails/base.html" %}
+
+{% block preheader %}Official Invocation Claim Notice for Bank Guarantee {{ bg.bg_number if bg else bg_number }}{% endblock %}
+
+{% block header_tag %}Legal Demand{% endblock %}
+
+{% block badge_area %}
+<div style="margin-bottom: 16px;">
+  <span style="display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; padding: 4px 10px; border-radius: 4px; background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;">
+    Invocation Demand Notice
+  </span>
+</div>
+{% endblock %}
+
+{% block heading %}
+<h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #0f172a; line-height: 1.35;">
+  Notice of Bank Guarantee Invocation Claim
+</h1>
+{% endblock %}
+
+{% block content %}
+<div style="font-size: 15px; line-height: 1.65; color: #334155; margin-bottom: 20px;">
+  <p style="margin: 0 0 12px 0;">
+    Dear Branch Manager / Trade Finance Desk,
+  </p>
+  <p style="margin: 0 0 12px 0;">
+    Please find this formal notification of our invocation claim in respect of <strong>Bank Guarantee {{ bg.bg_number if bg else bg_number }}</strong> issued by your institution.
+  </p>
+  <p style="margin: 0 0 12px 0;">
+    All necessary corporate approvals and verification checks have been finalized. The formal signed invocation demand letter is on file.
+  </p>
+</div>
+{% endblock %}
+
+{% block details_table %}
+<div style="margin: 20px 0;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;">
+    <tr>
+      <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #64748b; border-bottom: 1px solid #e2e8f0; width: 38%; background-color: #f1f5f9;">
+        Guarantee Number
+      </td>
+      <td style="padding: 10px 14px; font-size: 13px; font-weight: 700; color: #0f172a; border-bottom: 1px solid #e2e8f0; width: 62%;">
+        {{ bg.bg_number if bg else bg_number }}
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #64748b; border-bottom: 1px solid #e2e8f0; width: 38%; background-color: #f1f5f9;">
+        Beneficiary / Applicant
+      </td>
+      <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #0f172a; border-bottom: 1px solid #e2e8f0; width: 62%;">
+        {{ config.get('COMPANY_NAME', 'BG Command Centre') if config else 'BG Command Centre' }}
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #64748b; border-bottom: 1px solid #e2e8f0; width: 38%; background-color: #f1f5f9;">
+        Vendor / Contractor
+      </td>
+      <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #0f172a; border-bottom: 1px solid #e2e8f0; width: 62%;">
+        {{ bg.vendor_name if bg else vendor_name | default('n/a') }}
+      </td>
+    </tr>
+    {% if bg and bg.amount %}
+    <tr>
+      <td style="padding: 10px 14px; font-size: 13px; font-weight: 600; color: #64748b; width: 38%; background-color: #f1f5f9;">
+        Guarantee / Claim Amount
+      </td>
+      <td style="padding: 10px 14px; font-size: 13px; font-weight: 700; color: #b91c1c; width: 62%;">
+        {{ bg.amount }} {{ bg.currency }}
+      </td>
+    </tr>
+    {% endif %}
+  </table>
+</div>
+{% endblock %}
+
+{% block callout %}
+<div style="background-color: #fef2f2; border-left: 4px solid #ef4444; border-radius: 0 6px 6px 0; padding: 14px 16px; margin: 20px 0;">
+  <div style="font-size: 13px; color: #991b1b; line-height: 1.5;">
+    <strong>Action Required:</strong> In accordance with the unconditional terms of the Bank Guarantee, please remit the claim proceeds to our designated corporate account upon receipt of this notice and the formal demand instrument.
+  </div>
+</div>
+{% endblock %}
+
+{% block action_button %}
+  {% set target_url = (action_url or link_url) | absolute_url if (action_url or link_url) else '' %}
+  {% if target_url %}
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 28px 0 20px 0;">
+      <tr>
+        <td align="center">
+          <table border="0" cellpadding="0" cellspacing="0" class="btn-table">
+            <tr>
+              <td align="center" style="border-radius: 6px; background-color: #2563eb;">
+                <a href="{{ target_url }}" target="_blank" class="btn-link" style="display: inline-block; padding: 14px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #2563eb; text-align: center;">
+                  View Invocation Record &rarr;
+                </a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; margin-top: 16px; font-size: 12px; color: #64748b; line-height: 1.4; word-break: break-all;">
+      <strong>Direct link:</strong> <a href="{{ target_url }}" style="color: #2563eb; text-decoration: underline;">{{ target_url }}</a>
+    </div>
+  {% endif %}
+{% endblock %}
+
+{% block security_notice %}
+<div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; line-height: 1.5;">
+  Issued by Treasury & Legal Operations, <strong>{{ config.get('COMPANY_NAME', 'BG Command Centre') if config else 'BG Command Centre' }}</strong>.
+</div>
+{% endblock %}

@@ -1,0 +1,84 @@
+<style>
+/* BG Command Centre - Profile design pass.
+   Scoped to .prf-shell so it only affects the profile page. Matches the project-wide
+   refined identity (violet #7C3AED -> magenta #C026D3). */
+.prf-shell {
+  --prf-primary: #7C3AED;
+  --prf-accent: #C026D3;
+  --prf-tint: #F5F3FF;
+  --prf-ink: #111827;
+  --prf-body: #374151;
+  --prf-muted: #6B7280;
+  --prf-border: #E5E7EB;
+  --prf-border-strong: #D1D5DB;
+  --prf-grad: linear-gradient(135deg, var(--prf-primary), var(--prf-accent));
+  --prf-radius: 16px;
+  --prf-radius-sm: 10px;
+  --prf-shadow: 0 1px 2px rgba(17,24,39,.05), 0 10px 28px rgba(124,58,237,.08);
+  --prf-transition: .22s cubic-bezier(.4,0,.2,1);
+  color: var(--prf-body);
+}
+
+.prf-page-head { margin-bottom: 1.4rem; }
+.prf-eyebrow {
+  display: inline-flex; align-items: center; gap: .45rem;
+  font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--prf-primary); background: var(--prf-tint); border: 1px solid #E4DDFD;
+  padding: .28rem .7rem; border-radius: 999px; margin-bottom: .6rem;
+}
+.prf-title { font-size: 1.6rem; font-weight: 800; color: var(--prf-ink); letter-spacing: -.02em; margin-bottom: .2rem; }
+.prf-subtitle { font-size: .92rem; color: var(--prf-muted); margin-bottom: 0; }
+
+/* Tabs */
+.prf-tabs { display: flex; gap: .35rem; flex-wrap: wrap; margin-bottom: 1.4rem; border-bottom: 1px solid var(--prf-border); padding-bottom: .6rem; }
+.prf-tab {
+  display: inline-flex; align-items: center; gap: .45rem; text-decoration: none; color: var(--prf-muted);
+  font-weight: 600; font-size: .9rem; padding: .5rem .95rem; border-radius: var(--prf-radius-sm);
+  transition: all var(--prf-transition);
+}
+.prf-tab i { color: var(--prf-primary); }
+.prf-tab:hover { color: var(--prf-primary); background: var(--prf-tint); }
+.prf-tab.active { color: #fff; background: var(--prf-grad); box-shadow: 0 4px 14px rgba(124,58,237,.3); }
+.prf-tab.active i { color: #fff; }
+
+.prf-card { background: #fff; border: 1px solid var(--prf-border); border-radius: var(--prf-radius); box-shadow: var(--prf-shadow); overflow: hidden; }
+.prf-card-body { padding: 1.5rem 1.6rem; }
+
+.prf-section-title { font-weight: 800; color: var(--prf-ink); font-size: .95rem; margin-bottom: .9rem; letter-spacing: -.01em; }
+
+.prf-facts { display: grid; grid-template-columns: repeat(2, 1fr); gap: .9rem; margin-bottom: 1.4rem; }
+.prf-fact { background: var(--prf-tint); border-radius: var(--prf-radius-sm); padding: .7rem .9rem; }
+.prf-fact .lbl { font-size: .72rem; color: var(--prf-muted); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.prf-fact .val { font-size: .92rem; color: var(--prf-ink); font-weight: 600; }
+
+.prf-shell .btn-brand, .prf-shell .btn-outline-brand {
+  border-radius: var(--prf-radius-sm); font-weight: 600; transition: all var(--prf-transition);
+}
+.prf-shell .btn-brand { background: var(--prf-grad); border: 1px solid transparent; color: #fff; box-shadow: 0 4px 14px rgba(124,58,237,.32); }
+.prf-shell .btn-brand:hover { color: #fff; filter: brightness(1.06); box-shadow: 0 6px 20px rgba(124,58,237,.42); transform: translateY(-1px); }
+.prf-shell .btn-outline-brand { border: 1px solid var(--prf-border-strong); color: var(--prf-primary); background: #fff; }
+.prf-shell .btn-outline-brand:hover { border-color: var(--prf-primary); color: #fff; background: var(--prf-grad); }
+.prf-shell .btn:focus-visible { outline: 2px solid var(--prf-primary); outline-offset: 2px; }
+
+.prf-field label { font-size: .84rem; font-weight: 600; color: var(--prf-ink); display: block; margin-bottom: .35rem; }
+.prf-field .form-control, .prf-field .form-select {
+  border-radius: var(--prf-radius-sm); border: 1px solid var(--prf-border-strong); font-size: .92rem; color: var(--prf-ink);
+  transition: border-color var(--prf-transition), box-shadow var(--prf-transition);
+}
+.prf-field .form-control:focus, .prf-field .form-select:focus { border-color: var(--prf-primary); box-shadow: 0 0 0 .2rem rgba(124,58,237,.16); outline: none; }
+.prf-field .form-check-input:checked { background-color: var(--prf-primary); border-color: var(--prf-primary); }
+.prf-field .form-check-input:focus { border-color: var(--prf-primary); box-shadow: 0 0 0 .2rem rgba(124,58,237,.16); }
+
+.prf-role-badge {
+  display: inline-flex; align-items: center; gap: .4rem; border-radius: 999px; font-weight: 700; font-size: .82rem;
+  padding: .35rem .8rem; background: var(--prf-tint); color: var(--prf-primary);
+}
+.prf-role-badge.active { background: var(--prf-grad); color: #fff; box-shadow: 0 3px 10px rgba(124,58,237,.3); }
+
+@media (max-width: 767.98px) {
+  .prf-title { font-size: 1.3rem; }
+  .prf-page-head { margin-bottom: 1.1rem; }
+  .prf-facts { grid-template-columns: 1fr; }
+  .prf-card-body { padding: 1.2rem 1.1rem; }
+}
+</style>

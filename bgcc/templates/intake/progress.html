@@ -1,0 +1,69 @@
+{% extends "layouts/app.html" %}
+{% set active_nav = 'upload_extended' if is_extension else 'upload_bg' %}
+{% block title %}Validation in progress · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "intake/_intake_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="in-shell mx-auto" style="max-width:640px">
+  <div class="text-center mb-4">
+    <div class="in-eyebrow" style="margin:0 auto .7rem"><i class="bi bi-arrow-repeat"></i> AI validation</div>
+    <h1 class="in-title mb-2">Validating your Bank Guarantee</h1>
+    <p class="in-subtitle">{{ bg.bg_number }} - this usually takes under a minute.</p>
+  </div>
+
+  <div class="in-card">
+    <div class="in-card-body">
+      <div id="stageList">
+        {% set stages = [
+          ('extraction', 'Reading your Bank Guarantee…', 'bi-file-earmark-binary'),
+          ('po_sap_cross_check', 'Cross-checking against PO and financial records…', 'bi-clipboard-check'),
+          ('template_compliance', 'Comparing clauses against the ' ~ ('parent guarantee…' if is_extension else 'approved template…'), 'bi-layers'),
+          ('finalize', 'Finalizing your results…', 'bi-check2-square')
+        ] %}
+        {% for key, text, icon in stages %}
+          <div class="stage-row in-stage" data-stage-row="{{ key }}">
+            <span class="stage-icon in-stage-icon" data-stage-icon="{{ key }}"><i class="bi {{ icon }}"></i></span>
+            <div class="flex-grow-1">
+              <div class="fw-semibold" data-stage-label="{{ key }}">{{ text }}</div>
+              <div class="small in-muted" data-stage-detail="{{ key }}">Waiting to start…</div>
+            </div>
+            <span class="spinner-border spinner-border-sm text-primary" data-stage-spinner="{{ key }}" style="display:none"></span>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="alert alert-light border small mt-3 mb-0" id="longRunning" style="display:none">
+        <i class="bi bi-hourglass-split me-1"></i> This stage is taking longer than usual. Larger or complex scanned documents can take a while - hang in there.
+      </div>
+
+      <div class="mt-3" id="failureState" style="display:none">
+        <div class="alert alert-danger">
+          <div class="fw-bold"><i class="bi bi-exclamation-triangle me-1"></i> Validation could not complete</div>
+          <div class="small" id="failureMessage"></div>
+        </div>
+        <div class="d-flex gap-2" id="retryButtons"></div>
+      </div>
+
+      <div class="mt-3" id="blockedState" style="display:none">
+        <div class="alert alert-danger">
+          <div class="fw-bold"><i class="bi bi-x-octagon me-1"></i> This document does not appear to be a Bank Guarantee</div>
+          <div class="small">
+            The platform could not classify the uploaded file as a genuine Bank Guarantee, so validation
+            cannot proceed. Please upload the correct Bank Guarantee PDF, or contact support if you believe
+            this is in error.
+          </div>
+        </div>
+        <a class="in-btn in-btn-primary" href="{{ url_for('intake.upload_bg' if not is_extension else 'intake.upload_extended') }}">Upload a different document</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/intake.js"></script>
+<script>
+  initProgress("{{ bg_id }}", "{{ url_for('intake.upload_extended_review' if is_extension else 'intake.upload_bg_review', bg_id=bg_id) }}", {isExtension: {{ 'true' if is_extension else 'false' }}});
+</script>
+{% endblock %}

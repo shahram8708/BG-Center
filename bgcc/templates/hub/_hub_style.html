@@ -1,0 +1,108 @@
+<style>
+/* BG Command Centre - Hub pages design pass.
+   Scoped to .hub-shell so it only affects pages in this folder. Matches the
+   project-wide refined identity (violet #7C3AED -> magenta #C026D3) used across
+   the redesigned folders. */
+.hub-shell {
+  --hub-primary: #7C3AED;
+  --hub-accent: #C026D3;
+  --hub-tint: #F5F3FF;
+  --hub-ink: #111827;
+  --hub-body: #374151;
+  --hub-muted: #6B7280;
+  --hub-border: #E5E7EB;
+  --hub-border-strong: #D1D5DB;
+  --hub-grad: linear-gradient(135deg, var(--hub-primary), var(--hub-accent));
+  --hub-radius: 16px;
+  --hub-radius-sm: 10px;
+  --hub-shadow: 0 1px 2px rgba(17,24,39,.05), 0 10px 28px rgba(124,58,237,.08);
+  --hub-shadow-hover: 0 12px 32px rgba(124,58,237,.18);
+  --hub-transition: .22s cubic-bezier(.4,0,.2,1);
+}
+.hub-shell { color: var(--hub-body); }
+
+/* ---- Page header ---- */
+.hub-page-head { margin-bottom: 1.4rem; }
+.hub-eyebrow {
+  display: inline-flex; align-items: center; gap: .45rem;
+  font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--hub-primary); background: var(--hub-tint); border: 1px solid #E4DDFD;
+  padding: .28rem .7rem; border-radius: 999px; margin-bottom: .6rem;
+}
+.hub-title { font-size: 1.6rem; font-weight: 800; color: var(--hub-ink); letter-spacing: -.02em; margin-bottom: .2rem; }
+.hub-subtitle { font-size: .92rem; color: var(--hub-muted); margin-bottom: 0; }
+
+/* ---- Buttons ---- */
+.hub-btn {
+  display: inline-flex; align-items: center; gap: .45rem; border-radius: var(--hub-radius-sm);
+  font-weight: 600; padding: .5rem 1rem; font-size: .88rem; border: 1px solid transparent;
+  transition: all var(--hub-transition); text-decoration: none; cursor: pointer;
+}
+.hub-btn-primary { background: var(--hub-grad); color: #fff; box-shadow: 0 4px 14px rgba(124,58,237,.35); }
+.hub-btn-primary:hover { color: #fff; filter: brightness(1.06); box-shadow: 0 6px 20px rgba(124,58,237,.45); transform: translateY(-1px); }
+.hub-btn-primary:active { transform: translateY(0); }
+.hub-btn-ghost { background: #fff; border-color: var(--hub-border-strong); color: var(--hub-body); }
+.hub-btn-ghost:hover { border-color: var(--hub-primary); color: var(--hub-primary); background: var(--hub-tint); }
+.hub-btn-light { background: var(--hub-tint); border-color: #E4DDFD; color: var(--hub-primary); }
+.hub-btn-light:hover { background: var(--hub-primary); color: #fff; }
+.hub-btn-sm { padding: .34rem .68rem; font-size: .8rem; }
+.hub-btn:focus-visible { outline: 2px solid var(--hub-primary); outline-offset: 2px; }
+
+/* ---- Cards ---- */
+.hub-card { background: var(--hub-surface, #fff); border: 1px solid var(--hub-border); border-radius: var(--hub-radius); box-shadow: var(--hub-shadow); overflow: hidden; }
+
+/* ---- Filter bar ---- */
+.hub-filter { background: var(--hub-surface, #fff); border: 1px solid var(--hub-border); border-radius: var(--hub-radius); box-shadow: var(--hub-shadow); padding: 1rem 1.1rem; margin-bottom: 1rem; }
+.hub-filter .form-label { font-size: .76rem; font-weight: 700; color: var(--hub-muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: .3rem; }
+.hub-filter .form-control, .hub-filter .form-select { border-radius: var(--hub-radius-sm); border: 1px solid var(--hub-border-strong); font-size: .9rem; }
+.hub-filter .form-control:focus, .hub-filter .form-select:focus { border-color: var(--hub-primary); box-shadow: 0 0 0 .2rem rgba(124,58,237,.16); outline: none; }
+
+/* ---- Table ---- */
+.hub-table-wrap { overflow-x: auto; }
+.hub-table { width: 100%; border-collapse: collapse; }
+.hub-table thead th {
+  background: var(--hub-canvas, #F9FAFB); color: var(--hub-muted); font-size: .72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .05em; padding: .85rem 1rem; text-align: left;
+  border-bottom: 1px solid var(--hub-border); white-space: nowrap;
+}
+.hub-table tbody td { padding: .85rem 1rem; border-bottom: 1px solid var(--hub-border); font-size: .9rem; color: var(--hub-body); vertical-align: middle; }
+.hub-table tbody tr { transition: background var(--hub-transition); }
+.hub-table tbody tr:hover { background: var(--hub-tint); }
+.hub-table tbody tr:last-child td { border-bottom: none; }
+.hub-table .cell-strong { color: var(--hub-ink); font-weight: 600; }
+.hub-table .cell-muted { color: var(--hub-muted); }
+.hub-table a { color: var(--hub-primary); text-decoration: none; font-weight: 600; }
+.hub-table a:hover { text-decoration: underline; }
+
+/* ---- Status badges (macro output) ---- */
+.hub-shell .badge { font-weight: 600; border-radius: 999px; }
+
+/* ---- Inline action controls (coordinator) ---- */
+.hub-inline-form { display: inline-flex; align-items: center; gap: .4rem; }
+.hub-inline-form .form-control-sm, .hub-inline-form .form-select-sm { border-radius: 8px; border-color: var(--hub-border-strong); font-size: .82rem; }
+.hub-inline-form .form-control-sm:focus, .hub-inline-form .form-select-sm:focus { border-color: var(--hub-primary); box-shadow: 0 0 0 .16rem rgba(124,58,237,.14); outline: none; }
+
+/* ---- Empty state ---- */
+.hub-empty { text-align: center; padding: 3rem 1.5rem; }
+.hub-empty-icon { width: 68px; height: 68px; border-radius: 20px; margin: 0 auto 1rem; display: inline-flex; align-items: center; justify-content: center; background: var(--hub-tint); color: var(--hub-primary); font-size: 1.9rem; }
+.hub-empty-title { font-size: 1.05rem; font-weight: 700; color: var(--hub-ink); margin-bottom: .3rem; }
+.hub-empty-text { font-size: .88rem; color: var(--hub-muted); max-width: 440px; margin: 0 auto; }
+
+/* ---- Pagination ---- */
+.hub-pagination { display: flex; justify-content: center; gap: .3rem; margin-top: 1.2rem; }
+.hub-page-link { display: inline-flex; align-items: center; justify-content: center; min-width: 34px; height: 34px; padding: 0 .6rem; border-radius: var(--hub-radius-sm); border: 1px solid var(--hub-border); color: var(--hub-body); font-size: .86rem; font-weight: 600; text-decoration: none; transition: all var(--hub-transition); }
+.hub-page-link:hover { border-color: var(--hub-primary); color: var(--hub-primary); background: var(--hub-tint); }
+.hub-page-link.active { background: var(--hub-grad); color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(124,58,237,.3); }
+
+/* ---- Responsive ---- */
+@media (max-width: 767.98px) {
+  .hub-title { font-size: 1.3rem; }
+  .hub-page-head { margin-bottom: 1.1rem; }
+  .hub-table thead { display: none; }
+  .hub-table, .hub-table tbody, .hub-table tr, .hub-table td { display: block; width: 100%; }
+  .hub-table tbody tr { padding: .7rem; border-bottom: 1px solid var(--hub-border); }
+  .hub-table tbody td { border: none; padding: .28rem .4rem; display: flex; justify-content: space-between; gap: 1rem; }
+  .hub-table tbody td::before { content: attr(data-label); font-weight: 700; color: var(--hub-muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; }
+  .hub-inline-form { flex-wrap: wrap; }
+}
+</style>

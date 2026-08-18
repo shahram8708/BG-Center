@@ -1,0 +1,122 @@
+{% extends "layouts/app.html" %}
+{% from "macros/status.html" import status_badge %}
+{% set active_nav = 'approval_queue' %}
+{% block title %}Approval Queue · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "approval/_approval_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="apv-shell">
+  <div class="apv-page-head d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <div>
+      <div class="apv-eyebrow"><i class="bi bi-inbox"></i> My tasks</div>
+      <h1 class="apv-title">Approval Queue</h1>
+      <p class="apv-subtitle">Bank Guarantees pending your {{ role | role_label }} review.</p>
+    </div>
+    {% if role == 'abex' %}
+      <div class="apv-head-actions">
+        <a class="apv-btn apv-btn-ghost" href="{{ url_for('approval.closure_verifications') }}">
+          <i class="bi bi-box-arrow-in-right"></i> Closure Verifications
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <form method="get" class="apv-filter mb-3">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label" for="sap">SAP system</label>
+        <select name="sap" id="sap" class="form-select form-select-sm">
+          <option value="">All systems</option>
+          {% for s in sap_systems %}
+            <option value="{{ s.id }}" {% if filters.sap == s.id %}selected{% endif %}>{{ s.display_name }} ({{ s.code }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="min_amount">Min amount</label>
+        <input name="min_amount" id="min_amount" type="number" step="0.01" value="{{ filters.min_amount or '' }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="max_amount">Max amount</label>
+        <input name="max_amount" id="max_amount" type="number" step="0.01" value="{{ filters.max_amount or '' }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="apv-btn apv-btn-primary apv-btn-sm"><i class="bi bi-funnel"></i> Filter</button>
+        <a class="apv-btn apv-btn-ghost apv-btn-sm" href="{{ url_for('approval.queue') }}">Clear</a>
+      </div>
+    </div>
+    <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+      <div class="input-group input-group-sm" style="max-width:280px">
+        <input id="viewName" type="text" class="form-control" placeholder="View name" aria-label="View name">
+        <button type="button" class="apv-btn apv-btn-ghost" data-save-view><i class="bi bi-bookmark-plus"></i> Save view</button>
+      </div>
+      <div class="d-flex gap-1 flex-wrap">
+        {% for sv in saved_views %}
+          <a class="apv-btn apv-btn-ghost apv-btn-sm" href="{{ url_for('approval.queue', view=sv.id) }}">{{ sv.name }}</a>
+        {% endfor %}
+      </div>
+    </div>
+  </form>
+
+  {% if page.items %}
+    <div class="apv-card">
+      <div class="apv-table-wrap">
+        <table class="apv-table">
+          <thead>
+            <tr><th>BG</th><th>Vendor</th><th>Amount</th><th>Submitted</th><th>Risk</th><th>Urgency</th><th class="text-end">Action</th></tr>
+          </thead>
+          <tbody>
+            {% for bg in page.items %}
+              <tr>
+                <td class="cell-strong" data-label="BG">{{ bg.bg_number }}</td>
+                <td data-label="Vendor">{{ bg.vendor_name or '-' }}</td>
+                <td data-label="Amount">{{ bg.amount }} {{ bg.currency }}</td>
+                <td data-label="Submitted">{{ bg.created_at | datetime_display }}</td>
+                <td data-label="Risk">
+                  {% if bg.risk_tier_summary %}
+                    {% if 'prohibited' in bg.risk_tier_summary %}<span class="apv-badge apv-badge-danger"><i class="bi bi-lock-fill"></i> Prohibited</span>
+                    {% elif 'high' in bg.risk_tier_summary %}<span class="apv-badge apv-badge-warning">High</span>
+                    {% elif 'low' in bg.risk_tier_summary %}<span class="apv-badge apv-badge-success">Low</span>
+                    {% else %}<span class="apv-badge apv-badge-light">OK</span>{% endif %}
+                  {% else %}<span class="cell-muted">-</span>{% endif %}
+                </td>
+                <td data-label="Urgency">
+                  {% set d = days_pending.get(bg.id, 0) %}
+                  {% if d >= 5 %}<span class="apv-badge apv-badge-danger">{{ d }} days</span>
+                  {% elif d >= 2 %}<span class="apv-badge apv-badge-warning">{{ d }} days</span>
+                  {% else %}<span class="cell-muted">{{ d }} days</span>{% endif %}
+                </td>
+                <td data-label="Action" class="text-end">
+                  <a class="apv-btn apv-btn-primary apv-btn-sm" href="{{ url_for('approval.review', bg_id=bg.id) }}"><i class="bi bi-pencil-square"></i> Review</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% if page.pages > 1 %}
+      <nav class="apv-pagination" aria-label="Queue pages">
+        {% for p in range(1, page.pages + 1) %}
+          <a class="apv-page-link {{ 'active' if p == page.page }}" href="{{ url_for('approval.queue', page=p, sap=filters.sap, min_amount=filters.min_amount, max_amount=filters.max_amount) }}">{{ p }}</a>
+        {% endfor %}
+      </nav>
+    {% endif %}
+  {% else %}
+    <div class="apv-card">
+      <div class="apv-card-body">
+        <div class="apv-empty">
+          <span class="apv-empty-icon"><i class="bi bi-check2-circle"></i></span>
+          <div class="apv-empty-title">Nothing waiting on you right now</div>
+          <p class="apv-empty-text">You have no Bank Guarantees awaiting your review. New submissions will appear here.</p>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/approval.js"></script>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "components/flashes.html" import render_flashes with context %}
+{% block head %}
+{{ super() }}
+{% include "layouts/_layouts_style.html" %}
+{% endblock %}
+{% block body %}
+<div class="d-flex flex-column min-vh-100 public-shell">
+  {% include "components/public_navbar.html" %}
+  <main class="flex-grow-1">
+    <div class="container py-4">
+      {{ render_flashes() }}
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+  {% include "components/footer_full.html" %}
+</div>
+{% endblock %}

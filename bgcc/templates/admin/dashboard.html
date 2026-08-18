@@ -1,0 +1,109 @@
+{% extends "layouts/app.html" %}
+{% from "macros/status.html" import status_badge %}
+{% set active_nav = 'admin' %}
+{% block title %}Admin Dashboard · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "admin/_admin_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="admin-shell">
+  <div class="admin-page-head d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <div>
+      <div class="admin-eyebrow"><i class="bi bi-shield-check"></i> Administration</div>
+      <h1 class="admin-title">Admin Dashboard</h1>
+      <p class="admin-subtitle">Platform-wide operational overview and health at a glance.</p>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <a class="admin-card admin-card-hover text-decoration-none d-block" href="{{ url_for('admin.users') }}">
+        <div class="admin-stat">
+          <span class="admin-stat-icon"><i class="bi bi-person-plus"></i></span>
+          <div>
+            <div class="admin-stat-label">Pending registrations</div>
+            <div class="admin-stat-value">{{ pending_users }}</div>
+            <div class="admin-hint">Awaiting approval</div>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-4">
+      <a class="admin-card admin-card-hover text-decoration-none d-block" href="{{ url_for('admin.prohibited_overrides') }}">
+        <div class="admin-stat">
+          <span class="admin-stat-icon alt"><i class="bi bi-shield-exclamation"></i></span>
+          <div>
+            <div class="admin-stat-label">Prohibited-clause overrides</div>
+            <div class="admin-stat-value">{{ pending_overrides }}</div>
+            <div class="admin-hint">Waiting on your review</div>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-4">
+      <a class="admin-card admin-card-hover text-decoration-none d-block" href="{{ url_for('admin.audit_log') }}">
+        <div class="admin-stat">
+          <span class="admin-stat-icon info"><i class="bi bi-journal-text"></i></span>
+          <div>
+            <div class="admin-stat-label">Audit log</div>
+            <div class="admin-stat-value">Review</div>
+            <div class="admin-hint">Searchable event history</div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="admin-card">
+        <div class="admin-card-head"><i class="bi bi-activity"></i> Background job health <span class="admin-head-sub">last 24 hours</span></div>
+        <div class="admin-card-body">
+          {% if job_status %}
+            <div class="row g-2 text-center">
+              {% for status, count in job_status.items() %}
+                <div class="col">
+                  <div class="admin-badge admin-badge-light">{{ status | title }}</div>
+                  <div class="admin-stat-value mt-1">{{ count }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="admin-empty">
+              <span class="admin-empty-icon"><i class="bi bi-check2-circle"></i></span>
+              <div class="admin-empty-title">No jobs in the last 24 hours</div>
+              <p class="admin-empty-text">Scheduled background work has not run yet in this window.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="admin-card">
+        <div class="admin-card-head"><i class="bi bi-exclamation-triangle"></i> Recent failed jobs <span class="admin-head-sub">last 24 hours</span></div>
+        <div class="admin-card-body flush">
+          {% if recent_failed %}
+            {% for job in recent_failed %}
+              <div class="admin-list-row">
+                <span class="admin-badge admin-badge-danger"><i class="bi bi-x-circle"></i> {{ job.retry_count }} retries</span>
+                <div class="admin-list-main">
+                  <div class="cell-strong">{{ job.task_name }}</div>
+                  <div class="admin-hint">{{ job.error_message or 'No error detail' }}</div>
+                  <div class="admin-hint">{{ job.created_at | datetime_display }}</div>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="admin-empty">
+              <span class="admin-empty-icon"><i class="bi bi-check-circle"></i></span>
+              <div class="admin-empty-title">All clear</div>
+              <p class="admin-empty-text">No background jobs failed in the last 24 hours.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

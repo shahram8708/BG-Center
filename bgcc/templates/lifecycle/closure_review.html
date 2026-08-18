@@ -1,0 +1,62 @@
+{% extends "layouts/app.html" %}
+{% set active_nav = 'closure_review' %}
+{% block title %}Closure Review · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "lifecycle/_lifecycle_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="lfc-shell">
+  <div class="lfc-page-head">
+    <div class="lfc-eyebrow"><i class="bi bi-clipboard2-check"></i> TC head review</div>
+    <h1 class="lfc-title mb-1">Closure Review (TC Head)</h1>
+    <p class="lfc-subtitle mb-0">Review exception closures raised by Coordinators.</p>
+  </div>
+
+  {% if closures %}
+    {% for cl in closures %}
+      {% set bg = bg_map.get(cl.bank_guarantee_id) %}
+      <div class="lfc-card mb-4">
+        <div class="lfc-card-head"><i class="bi bi-folder-check"></i> {{ bg.bg_number if bg else '-' }}</div>
+        <div class="lfc-card-body">
+          <div class="lfc-facts mb-3">
+            <div class="lfc-fact"><div class="lbl">Vendor</div><div class="val">{{ bg.vendor_name if bg else '-' }}</div></div>
+            <div class="lfc-fact"><div class="lbl">Amount</div><div class="val">{{ bg.amount if bg else '-' }} {{ bg.currency if bg else '' }}</div></div>
+            <div class="lfc-fact"><div class="lbl">Expiry</div><div class="val">{{ bg.expiry_date if bg else '-' }}</div></div>
+          </div>
+
+          <div class="lfc-alert mb-3">
+            <div class="lfc-alert-title">Eligibility reasoning</div>
+            {{ cl.eligibility_reasoning }}
+          </div>
+          <div class="lfc-alert warn mb-3">
+            <div class="lfc-alert-title">Coordinator's justification</div>
+            {{ cl.exception_justification or '-' }}
+          </div>
+
+          <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="closure_id" value="{{ cl.id }}">
+            <div class="mb-3 lfc-field">
+              <label for="comment-{{ cl.id }}">Comment</label>
+              <textarea id="comment-{{ cl.id }}" name="comment" class="form-control" rows="2" required placeholder="Add your review comment (required for both approve and reject)."></textarea>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="submit" name="decision" value="approve" class="btn btn-brand"><i class="bi bi-check-lg me-1"></i> Approve</button>
+              <button type="submit" name="decision" value="reject" class="btn btn-outline-danger"><i class="bi bi-x-lg me-1"></i> Reject</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="lfc-card">
+      <div class="lfc-empty">
+        <i class="bi bi-check2-circle"></i>
+        <div class="fw-semibold text-dark mb-1">No closures waiting on your review</div>
+        Exception closures routed to category-lead review will appear here.
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

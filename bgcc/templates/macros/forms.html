@@ -1,0 +1,38 @@
+{% macro floating_input(field, type='text', required=True, autocomplete=None, password_meter=None) %}
+  <div class="form-floating mb-3">
+    {{ field(type=type, class_='form-control' + (' is-invalid' if field.errors else ''), placeholder=' ', autocomplete=autocomplete or 'on', data_password_meter=password_meter, data_required=('1' if required else None), aria_invalid=('true' if field.errors else 'false')) }}
+    <label for="{{ field.id }}">{{ field.label.text }}{% if required %}<span class="text-danger"> *</span>{% endif %}</label>
+    {% for e in field.errors %}<div class="invalid-feedback d-block"><i class="bi bi-exclamation-circle me-1"></i>{{ e }}</div>{% endfor %}
+    {% if password_meter %}
+      <div class="password-meter" id="{{ password_meter }}">
+        <div class="password-meter-bars"><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="password-meter-feedback">
+          <div class="password-rules-list mt-2">
+            <div class="rule-item text-muted" data-rule="length"><i class="bi bi-circle me-1"></i> At least 8 characters</div>
+            <div class="rule-item text-muted" data-rule="uppercase"><i class="bi bi-circle me-1"></i> Uppercase letter (A-Z)</div>
+            <div class="rule-item text-muted" data-rule="lowercase"><i class="bi bi-circle me-1"></i> Lowercase letter (a-z)</div>
+            <div class="rule-item text-muted" data-rule="number"><i class="bi bi-circle me-1"></i> Number (0-9)</div>
+            <div class="rule-item text-muted" data-rule="special"><i class="bi bi-circle me-1"></i> Special character (!@#$%...)</div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+{% macro floating_select(field, required=True) %}
+  <div class="form-floating mb-3">
+    {{ field(class_='form-select' + (' is-invalid' if field.errors else ''), placeholder=' ', data_required=('1' if required else None), aria_invalid=('true' if field.errors else 'false')) }}
+    <label for="{{ field.id }}">{{ field.label.text }}{% if required %}<span class="text-danger"> *</span>{% endif %}</label>
+    {% for e in field.errors %}<div class="invalid-feedback d-block"><i class="bi bi-exclamation-circle me-1"></i>{{ e }}</div>{% endfor %}
+  </div>
+{% endmacro %}
+
+{% macro labelled_field(field, required=True, help=None) %}
+  <div class="mb-3">
+    <label class="form-label{% if required %} required{% endif %}" for="{{ field.id }}">{{ field.label.text }}</label>
+    {{ field(class_='form-control' + (' is-invalid' if field.errors else ''), data_required=('1' if required else None), aria_invalid=('true' if field.errors else 'false')) }}
+    {% if help %}<div class="form-text">{{ help }}</div>{% endif %}
+    {% for e in field.errors %}<div class="invalid-feedback d-block"><i class="bi bi-exclamation-circle me-1"></i>{{ e }}</div>{% endfor %}
+  </div>
+{% endmacro %}

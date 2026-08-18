@@ -1,0 +1,63 @@
+{% extends "layouts/app.html" %}
+{% set active_nav = 'admin' %}
+{% block title %}Edit {{ user.full_name }} · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "admin/_admin_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="admin-shell">
+  <div class="admin-page-head d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <div>
+      <div class="admin-eyebrow"><i class="bi bi-pencil-square"></i> Account management</div>
+      <h1 class="admin-title">Edit user</h1>
+      <p class="admin-subtitle">{{ user.email }}</p>
+    </div>
+    <div class="admin-head-actions">
+      <a class="admin-btn admin-btn-ghost" href="{{ url_for('admin.users') }}"><i class="bi bi-arrow-left"></i> Back</a>
+    </div>
+  </div>
+
+  <div class="admin-card">
+    <div class="admin-card-body">
+      <div class="row g-3 mb-4">
+        <div class="col-md-4 d-flex align-items-center gap-3">
+          <span class="admin-avatar" style="width:52px;height:52px;font-size:1.1rem">{{ user.full_name[:1] | upper }}</span>
+          <div>
+            <div class="cell-strong">{{ user.full_name }}</div>
+            <div class="admin-hint">{{ user.email }}</div>
+          </div>
+        </div>
+        <div class="col-md-4"><div class="admin-detail-label">Business unit</div><div class="admin-detail-value">{{ user.sap_system.display_name if user.sap_system else '-' }}</div></div>
+        <div class="col-md-4"><div class="admin-detail-label">Member since</div><div class="admin-detail-value">{{ user.created_at | datetime_display }}</div></div>
+      </div>
+
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="admin-field mb-3">
+          <label for="sap_system_id">Business unit (SAP system) <span class="req">*</span></label>
+          <select id="sap_system_id" name="sap_system_id" class="form-select">
+            {% for s in sap_systems %}<option value="{{ s.id }}" {% if user.sap_system_id == s.id %}selected{% endif %}>{{ s.display_name }} ({{ s.code }})</option>{% endfor %}
+          </select>
+        </div>
+        <div class="admin-field mb-3">
+          <label>Granted roles <span class="req">*</span></label>
+          <div class="d-flex flex-wrap gap-2">
+            {% for val, label in role_choices %}
+              <label class="admin-check">
+                <input class="form-check-input" type="checkbox" name="roles" value="{{ val }}" {% if val in (user.granted_roles or []) %}checked{% endif %}>
+                <span class="form-check-label">{{ label }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="admin-check mb-4">
+          <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if user.is_active %}checked{% endif %}>
+          <label class="form-check-label" for="is_active">Active account</label>
+        </div>
+        <button type="submit" class="admin-btn admin-btn-primary"><i class="bi bi-check-lg"></i> Save changes</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

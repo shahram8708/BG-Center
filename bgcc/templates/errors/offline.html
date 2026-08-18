@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}You're offline · {{ app_name }}{% endblock %}
+{% block body %}
+{% include "errors/_errors_style.html" %}
+<div class="err-shell">
+<div class="d-flex flex-column min-vh-100">
+  <nav class="navbar navbar-bgcc sticky-top">
+    <div class="container">
+      <a class="brand-logo" href="/"><span class="brand-mark"><i class="bi bi-shield-check"></i></span><span>{{ app_name }}</span></a>
+    </div>
+  </nav>
+  <main class="flex-grow-1 d-flex align-items-center justify-content-center p-4">
+    <div class="text-center err-card">
+      <span class="err-icon"><i class="bi bi-wifi-off"></i></span>
+      <div class="err-eyebrow"><i class="bi bi-plug"></i> Connection lost</div>
+      <h1 class="err-title">You're offline</h1>
+      <p class="err-text">
+        It looks like you've lost your connection. Static reference pages (About, Policies, Terms)
+        remain available. Any pages you previously visited may be shown as cached data. All
+        workflow actions - uploads, approvals, closures, invocations and admin changes - require a
+        live connection and cannot be submitted offline. Check your connection and try again.
+      </p>
+      <button class="err-btn" onclick="window.location.reload()"><i class="bi bi-arrow-repeat"></i> Retry</button>
+    </div>
+  </main>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,154 @@
+{% extends "layouts/app.html" %}
+{% set active_nav = 'profile' %}
+{% block title %}Profile &amp; Preferences · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "profile/_profile_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="prf-shell">
+  <div class="prf-page-head">
+    <div class="prf-eyebrow"><i class="bi bi-person-circle"></i> Account settings</div>
+    <h1 class="prf-title mb-1">Profile &amp; Preferences</h1>
+    <p class="prf-subtitle mb-0">Manage your account, roles, and notification settings.</p>
+  </div>
+
+  <ul class="prf-tabs" role="tablist" style="list-style: none;">
+    <li class="nav-item"><a class="prf-tab {{ 'active' if tab == 'account' }}" href="?tab=account" role="tab"><i
+          class="bi bi-person"></i>Account</a></li>
+    <li class="nav-item"><a class="prf-tab {{ 'active' if tab == 'roles' }}" href="?tab=roles" role="tab"><i
+          class="bi bi-shield-check"></i>Roles</a></li>
+    <li class="nav-item"><a class="prf-tab {{ 'active' if tab == 'preferences' }}" href="?tab=preferences" role="tab"><i
+          class="bi bi-sliders"></i>Preferences</a></li>
+    <li class="nav-item"><a class="prf-tab {{ 'active' if tab == 'notifications' }}" href="?tab=notifications"
+        role="tab"><i class="bi bi-bell"></i>Notifications</a></li>
+  </ul>
+
+  <div class="prf-card">
+    <div class="prf-card-body">
+      {% if tab == 'account' %}
+      <h5 class="prf-section-title">Account details</h5>
+      <div class="prf-facts">
+        <div class="prf-fact">
+          <div class="lbl">Name</div>
+          <div class="val">{{ current_user.full_name }}</div>
+        </div>
+        <div class="prf-fact">
+          <div class="lbl">Email</div>
+          <div class="val">{{ current_user.email }}</div>
+        </div>
+        <div class="prf-fact">
+          <div class="lbl">SAP system</div>
+          <div class="val">{{ current_user.sap_system.display_name if current_user.sap_system else '-' }}</div>
+        </div>
+        <div class="prf-fact">
+          <div class="lbl">Member since</div>
+          <div class="val">{{ current_user.created_at | datetime_display }}</div>
+        </div>
+      </div>
+
+      <h5 class="prf-section-title">Change password</h5>
+      {% if password_success %}<div class="alert alert-success">Your password has been updated.</div>{% endif %}
+      {% if password_error %}<div class="alert alert-danger">{{ password_error }}</div>{% endif %}
+      <form method="post" class="col-md-6">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="form" value="password">
+        <div class="mb-3 prf-field">
+          <label for="current_password">Current password</label>
+          <input id="current_password" name="current_password" type="password" class="form-control" required>
+        </div>
+        <div class="mb-3 prf-field">
+          <label for="new_password">New password</label>
+          <input id="new_password" name="new_password" type="password" class="form-control" required>
+          <div class="form-text small">At least 8 characters with upper/lowercase, a number and a special character.
+          </div>
+        </div>
+        <div class="mb-3 prf-field">
+          <label for="confirm_password">Confirm new password</label>
+          <input id="confirm_password" name="confirm_password" type="password" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-brand">Update password</button>
+      </form>
+
+      {% elif tab == 'roles' %}
+      <h5 class="prf-section-title">Your roles</h5>
+      <div class="d-flex flex-wrap gap-2 mb-4">
+        {% for role in current_user.granted_role_values %}
+        <span class="prf-role-badge {{ 'active' if role == current_user.active_role }}">{{ role | role_label }}{% if
+          role == current_user.active_role %} (active){% endif %}</span>
+        {% endfor %}
+      </div>
+      {% if current_user.is_multi_role %}
+      <h5 class="prf-section-title">Switch active role</h5>
+      <div class="d-flex flex-column gap-2 col-md-6">
+        {% for role in current_user.granted_role_values %}
+        <form method="post" action="{{ url_for('profile.role_switch') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="role" value="{{ role }}">
+          <button class="btn w-100 {{ 'btn-brand' if role == current_user.active_role else 'btn-outline-brand' }}"
+            type="submit">
+            {{ role | role_label }}{% if role == current_user.active_role %} - active{% endif %}
+          </button>
+        </form>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-muted small">You hold a single role.</p>
+      {% endif %}
+
+      {% elif tab == 'preferences' %}
+      <h5 class="prf-section-title">Preferences</h5>
+      {% if prefs_success %}<div class="alert alert-success">Preferences saved.</div>{% endif %}
+      {% if prefs_error %}<div class="alert alert-danger">{{ prefs_error }}</div>{% endif %}
+      <form method="post" class="col-md-6">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="form" value="preferences">
+        <div class="mb-3 prf-field">
+          <label for="language">Language</label>
+          <select id="language" name="language" class="form-select">
+            <option value="en" {% if prefs.language=='en' %}selected{% endif %}>English</option>
+            <option value="hi" {% if prefs.language=='hi' %}selected{% endif %}>हिन्दी (Hindi)</option>
+          </select>
+        </div>
+        <div class="mb-3 prf-field">
+          <label for="date_format">Date format</label>
+          <input id="date_format" name="date_format" value="{{ prefs.date_format }}" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-brand">Save preferences</button>
+      </form>
+
+      {% elif tab == 'notifications' %}
+      <h5 class="prf-section-title">Notification settings</h5>
+      {% if prefs_success %}<div class="alert alert-success">Notification settings saved.</div>{% endif %}
+      <form method="post" class="col-md-6">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="form" value="preferences">
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" name="notify_email" id="notify_email" {% if prefs.notify_email
+            %}checked{% endif %}>
+          <label class="form-check-label" for="notify_email">Email notifications</label>
+        </div>
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" name="notify_in_app" id="notify_in_app" {% if
+            prefs.notify_in_app %}checked{% endif %}>
+          <label class="form-check-label" for="notify_in_app">In-app notifications</label>
+        </div>
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" name="notify_push" id="notify_push" {% if prefs.notify_push
+            %}checked{% endif %}>
+          <label class="form-check-label" for="notify_push">Push notifications</label>
+        </div>
+        <button type="submit" class="btn btn-brand">Save notification settings</button>
+        <div class="mt-3">
+          <button type="button" class="btn btn-outline-brand" data-enable-push>
+            <i class="bi bi-bell me-1"></i> Enable browser push on this device
+          </button>
+          <div class="form-text small">You'll be asked for permission only after you click. Browser push lets you
+            receive notifications even when this tab is closed.</div>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "layouts/app.html" %}
+{% set active_nav = 'assistant' %}
+{% block title %}AI Assistant · {{ app_name }}{% endblock %}
+{% block head %}
+{{ super() }}
+{% include "assistant/_assistant_style.html" %}
+{% endblock %}
+{% block content %}
+<div class="asst-shell">
+  <div class="asst-page-head d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div>
+      <div class="asst-eyebrow"><i class="bi bi-robot"></i> Context-Aware AI Assistance</div>
+      <h1 class="asst-title">AI Workflow &amp; Policy Assistant</h1>
+      <p class="asst-subtitle">Real-time guidance grounded in your active screen context, live BG records, and platform policies.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" data-assistant-clear-btn title="Clear conversation history">
+        <i class="bi bi-trash3 me-1"></i>Clear Chat
+      </button>
+    </div>
+  </div>
+
+  <div class="asst-conv">
+    <div class="asst-conv-bar d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <span class="asst-avatar"><i class="bi bi-robot"></i></span>
+        <div>
+          <div class="asst-name">BG Command AI Assistant</div>
+          <div class="asst-status"><span class="dot"></span> <span data-assistant-status-text>Connected &amp; context-ready</span></div>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge rounded-pill bg-white text-dark border px-3 py-2 d-inline-flex align-items-center gap-1 shadow-sm" data-assistant-context-badge style="font-size:0.78rem; font-weight:500;">
+          <i class="bi bi-layers text-primary"></i> <span data-assistant-context-label>Resolving screen context…</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Suggested quick prompt chips -->
+    <div class="px-3 py-2 bg-light border-bottom d-flex align-items-center gap-2 overflow-auto text-nowrap" data-assistant-quick-prompts style="font-size:0.8rem;">
+      <span class="text-muted fw-semibold me-1"><i class="bi bi-stars text-warning"></i> Quick prompts:</span>
+      <button type="button" class="btn btn-sm btn-white border rounded-pill py-0 px-2 bg-white" data-prompt-chip="Summarize the current page and visible BG data in 2 sentences.">Summary</button>
+      <button type="button" class="btn btn-sm btn-white border rounded-pill py-0 px-2 bg-white" data-prompt-chip="What is the current status and workflow stage of this BG?">Check Status</button>
+      <button type="button" class="btn btn-sm btn-white border rounded-pill py-0 px-2 bg-white" data-prompt-chip="What deviations or critical issues are flagged on this screen?">Deviations</button>
+      <button type="button" class="btn btn-sm btn-white border rounded-pill py-0 px-2 bg-white" data-prompt-chip="What are the next required actions or approvals?">Next Steps</button>
+      <button type="button" class="btn btn-sm btn-white border rounded-pill py-0 px-2 bg-white" data-prompt-chip="Explain the policy requirements for High-tier deviations.">Policy Rules</button>
+    </div>
+
+    <div class="assistant-thread flex-grow-1 p-3 overflow-auto asst-thread" data-assistant-page-thread>
+      {% if not thread %}
+        <div class="text-center text-muted my-4 py-3" data-assistant-empty-placeholder>
+          <i class="bi bi-chat-dots fs-1 d-block mb-2 text-primary opacity-50"></i>
+          <p class="mb-1 fw-semibold text-dark">How can I help you today?</p>
+          <p class="small mb-0">Ask questions about your current Bank Guarantee, approval queues, claim windows, or platform policies.</p>
+        </div>
+      {% endif %}
+      {% for m in thread %}
+        <div class="assistant-msg {{ 'assistant-user' if m.role == 'user' else 'assistant-bot' }} mb-3">
+          <div class="small fw-semibold text-muted mb-1">{{ 'You' if m.role == 'user' else 'Assistant' }}</div>
+          <div class="small">{{ m.content }}</div>
+          {% if m.cited_sources %}
+            <div class="small text-muted mt-1"><i class="bi bi-journal-text me-1"></i>Sources: {{ m.cited_sources | join(', ') }}</div>
+          {% endif %}
+          {% if m.related_link_url %}<div class="mt-1"><a class="small" href="{{ m.related_link_url }}" target="_blank">Related screen →</a></div>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+
+    <form class="assistant-input border-top p-3 d-flex gap-2 asst-inputbar" data-assistant-page-form>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="initial_context_url" value="{{ initial_context_url or '' }}" data-initial-context-url>
+      <input type="text" name="question" class="form-control" placeholder="Ask about this page, active BG records, or platform policy…" autocomplete="off" data-assistant-page-question required>
+      <button class="btn btn-brand px-4 asst-btn asst-btn-primary" type="submit" data-assistant-send-btn>
+        <i class="bi bi-send me-1"></i>Ask
+      </button>
+    </form>
+  </div>
+
+  <div class="asst-disclaimer"><i class="bi bi-info-circle"></i> {{ disclaimer }}</div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/assistant.js"></script>
+{% endblock %}

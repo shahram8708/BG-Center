@@ -1,0 +1,36 @@
+{% macro status_badge(status) -%}
+  {%- set map = {
+    'draft':'secondary', 'pending_buyer_approval':'warning',
+    'pending_category_lead_approval':'warning', 'pending_fc_approval':'warning',
+    'pending_bu_cfmc_approval':'warning', 'pending_ceo_cfo':'warning',
+    'pending_abex_verification':'warning', 'submitted_to_bank':'primary',
+    'live':'success', 'rejected':'danger', 'closed':'dark',
+    'queued':'secondary', 'processing':'warning', 'completed':'success', 'failed':'danger',
+    'accepted':'success', 'rejected':'danger', 'pending':'warning',
+    'low':'success', 'high':'warning', 'prohibited':'danger'
+  } -%}
+  {%- set st_key = status.value if status.value is defined else (status | string if status else '') -%}
+  {%- set label = st_key | replace('_', ' ') | title if st_key else 'Unknown' -%}
+  {%- set cls = map.get(st_key, 'secondary') -%}
+  {%- set icons = {'primary':'bi-info-circle','secondary':'bi-question-circle','warning':'bi-exclamation-triangle','success':'bi-check-circle','danger':'bi-x-circle','dark':'bi-circle-fill'} -%}
+  <span class="badge rounded-pill text-bg-{{ cls }}"><i class="bi {{ icons.get(cls, 'bi-info-circle') }} me-1"></i>{{ label }}</span>
+{%- endmacro %}
+
+{% macro tier_badge(tier) -%}
+  {%- set cls = 'tier-low' if tier == 'low' else ('tier-high' if tier == 'high' else ('tier-prohibited' if tier == 'prohibited' else 'text-bg-secondary')) -%}
+  {%- set icon = 'bi-arrow-down-circle' if tier == 'low' else ('bi-arrow-up-circle' if tier == 'high' else ('bi-ban' if tier == 'prohibited' else 'bi-shield')) -%}
+  <span class="tier-badge {{ cls }}"><i class="bi {{ icon }} me-1"></i>{{ tier | title if tier else 'Unknown' }}</span>
+{%- endmacro %}
+
+{% macro conf_badge(conf) -%}
+  {%- set cls = 'conf-high' if conf == 'high' else ('conf-medium' if conf == 'medium' else ('conf-low' if conf == 'low' else 'text-bg-secondary')) -%}
+  {%- set icon = 'bi-check-lg' if conf == 'high' else ('bi-exclamation' if conf == 'medium' else ('bi-dash' if conf == 'low' else 'bi-dash')) -%}
+  <span class="conf-badge {{ cls }}"><i class="bi {{ icon }} me-1"></i>{{ conf | title if conf else '-' }}</span>
+{%- endmacro %}
+
+{% macro result_badge(status) -%}
+  {%- set map = {'pass':'success','warning':'warning','fail':'danger'} -%}
+  {%- set cls = map.get(status, 'secondary') -%}
+  {%- set icon = 'bi-check-lg' if status == 'pass' else ('bi-exclamation-triangle' if status == 'warning' else ('bi-x-lg' if status == 'fail' else 'bi-info-circle')) -%}
+  <span class="badge rounded-pill text-bg-{{ cls }}"><i class="bi {{ icon }} me-1"></i>{{ status | title }}</span>
+{%- endmacro %}
