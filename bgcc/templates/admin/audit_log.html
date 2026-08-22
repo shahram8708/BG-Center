@@ -79,9 +79,44 @@
 
   {% if page.pages > 1 %}
     <nav class="admin-pagination" aria-label="Audit log pages">
-      {% for p in range(1, page.pages + 1) %}
+      {% if page.has_prev %}
+        <a class="admin-page-link" href="{{ url_for('admin.audit_log', page=page.prev_num, **filters) }}" aria-label="Previous">
+          <i class="bi bi-chevron-left"></i> Previous
+        </a>
+      {% else %}
+        <span class="admin-page-link disabled" aria-disabled="true">
+          <i class="bi bi-chevron-left"></i> Previous
+        </span>
+      {% endif %}
+
+      {% set start_p = 1 %}
+      {% set end_p = page.pages %}
+      {% if page.pages > 3 %}
+        {% if page.page <= 2 %}
+          {% set start_p = 1 %}
+          {% set end_p = 3 %}
+        {% elif page.page >= page.pages - 1 %}
+          {% set start_p = page.pages - 2 %}
+          {% set end_p = page.pages %}
+        {% else %}
+          {% set start_p = page.page - 1 %}
+          {% set end_p = page.page + 1 %}
+        {% endif %}
+      {% endif %}
+
+      {% for p in range(start_p, end_p + 1) %}
         <a class="admin-page-link {{ 'active' if p == page.page }}" href="{{ url_for('admin.audit_log', page=p, **filters) }}">{{ p }}</a>
       {% endfor %}
+
+      {% if page.has_next %}
+        <a class="admin-page-link" href="{{ url_for('admin.audit_log', page=page.next_num, **filters) }}" aria-label="Next">
+          Next <i class="bi bi-chevron-right"></i>
+        </a>
+      {% else %}
+        <span class="admin-page-link disabled" aria-disabled="true">
+          Next <i class="bi bi-chevron-right"></i>
+        </span>
+      {% endif %}
     </nav>
   {% endif %}
 </div>

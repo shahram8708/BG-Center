@@ -341,12 +341,7 @@ def initialize_seed_data(app=None, echo=None):
 
     try:
         log.info("Seed initialization started")
-        from sqlalchemy import inspect
-        inspector = inspect(db.engine)
-        tables = set(inspector.get_table_names())
-        required_tables = {"sap_systems", "users", "application_settings", "sap_po_records"}
-        if not required_tables.issubset(tables):
-            db.create_all()
+        db.create_all()
 
         upload_dir = app.config.get("UPLOAD_FOLDER") if app else None
         with _seed_lock(lock_dir=upload_dir):
@@ -354,6 +349,8 @@ def initialize_seed_data(app=None, echo=None):
             seed_admin_user(echo=echo)
             seed_starter_settings(echo=echo)
             seed_purchase_orders(echo=echo)
+            from bgcc.services.demo_seed_service import seed_demo_data
+            seed_demo_data(echo=echo)
 
         log.info("Seed initialization completed")
     except Exception as e:

@@ -271,13 +271,14 @@
 /* ---- Pagination ---- */
 .admin-pagination { display: flex; justify-content: center; gap: .3rem; margin-top: 1.2rem; }
 .admin-page-link {
-  display: inline-flex; align-items: center; justify-content: center;
+  display: inline-flex; align-items: center; justify-content: center; gap: .35rem;
   min-width: 34px; height: 34px; padding: 0 .6rem; border-radius: var(--admin-radius-sm);
   border: 1px solid var(--admin-border); color: var(--admin-body); font-size: .86rem; font-weight: 600;
   text-decoration: none; transition: all var(--admin-transition);
 }
 .admin-page-link:hover { border-color: var(--admin-primary); color: var(--admin-primary); background: var(--admin-tint); }
 .admin-page-link.active { background: var(--admin-grad); color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(124,58,237,.3); }
+.admin-page-link.disabled { opacity: .45; pointer-events: none; cursor: not-allowed; }
 
 /* ---- List rows (pending registrations etc.) ---- */
 .admin-list-row { display: flex; flex-wrap: wrap; align-items: center; gap: .9rem; padding: 1rem 1.25rem; }

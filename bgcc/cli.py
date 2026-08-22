@@ -17,16 +17,19 @@ from bgcc.services.seed_service import (
     DEFAULT_SAP_SYSTEMS,
     LOCAL_PO_RECORDS,
     STARTER_SETTINGS,
+    initialize_seed_data,
     seed_admin_user,
     seed_purchase_orders as run_seed_purchase_orders,
     seed_sap_systems,
     seed_starter_settings,
 )
+from bgcc.services.demo_seed_service import seed_demo_data as run_seed_demo_data
 
 
 @click.command("seed-purchase-orders", help="Seed the local PO reference dataset for the SAP cross-check fallback.")
 @with_appcontext
 def seed_purchase_orders():
+    db.create_all()
     run_seed_purchase_orders(echo=click.echo)
 
 
@@ -39,11 +42,23 @@ def users_group():
 @click.command("seed-dev-data", help="Bootstrap reference data for a fresh development environment.")
 @with_appcontext
 def seed_dev_data():
-    seed_sap_systems(echo=click.echo)
-    seed_admin_user(echo=click.echo)
-    seed_starter_settings(echo=click.echo)
-    run_seed_purchase_orders(echo=click.echo)
+    db.create_all()
+    initialize_seed_data(echo=click.echo)
     click.echo("Seed: complete. You can sign in as the admin account.")
+
+
+@click.command("seed-demo-data", help="Populate a production-realistic demo/staging dataset "
+                                       "(users, Bank Guarantees, and every downstream table) on top "
+                                       "of the existing baseline seed data. Safe to run more than once.")
+@click.option("--reset", is_flag=True, default=False,
+              help="Delete this module's previously-seeded rows first (never touches the baseline "
+                   "admin, SapSystems, ApplicationSettings, or the original 8 SapPoRecords), then "
+                   "regenerate a fresh dataset.")
+@with_appcontext
+def seed_demo_data(reset):
+    db.create_all()
+    click.echo("Seed: this can take a little while (100+ Bank Guarantees with full lifecycles)...")
+    run_seed_demo_data(echo=click.echo, reset=reset)
 
 
 @click.command("approve", help="Approve a pending registration and assign roles and business-unit scope.")
@@ -52,6 +67,7 @@ def seed_dev_data():
 @click.option("--sap-system", default=None, help="SAP system code for the user's business-unit scope.")
 @with_appcontext
 def approve(email, roles, sap_system):
+    db.create_all()
     user = User.query.filter_by(email=email.strip().lower()).first()
     if not user:
         raise click.ClickException(f"No user with email {email}.")
@@ -105,6 +121,7 @@ def approve(email, roles, sap_system):
 @click.argument("email", required=False, default=None)
 @with_appcontext
 def create_admin(email):
+    db.create_all()
     email = (email or os.environ.get("SEED_ADMIN_EMAIL") or "admin@bg.center").lower()
     user = User.query.filter_by(email=email).first()
     password = os.environ.get("SEED_ADMIN_PASSWORD")
@@ -151,5 +168,5 @@ users_group.add_command(create_admin)
 def register_cli(app):
     app.cli.add_command(seed_dev_data)
     app.cli.add_command(seed_purchase_orders)
+    app.cli.add_command(seed_demo_data)
     app.cli.add_command(users_group)
-
